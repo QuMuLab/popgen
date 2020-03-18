@@ -129,7 +129,7 @@ GOOD_DOMAINS = ['depots', 'driverlog', 'logistics', 'tpp', 'zenotravel', 'rovers
 
 import sys
 
-print "Loading domains...",
+print("Loading domains...", end=' ')
 sys.stdout.flush()
 
 import planning_domains_api as api
@@ -169,6 +169,6 @@ FORBIDDEN_DOMAINS.extend([
 # Every plan is the same!!
 FORBIDDEN_DOMAINS.append('movie')
 
-print "done!"
+print("done!")
 #print GOOD_DOMAINS
 

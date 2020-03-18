@@ -47,17 +47,17 @@ def do_minimaxout(mapping, output):
 
     for v in values:
         if mapping[v] != 'NULL':
-            print mapping[v]
+            print(mapping[v])
 
 def do_wcnf(mapping, output):
     data = get_lines(output, lower_bound='p .*')
     for line in data:
-        print "Clause (%s):" % line.split(' ')[0]
+        print("Clause (%s):" % line.split(' ')[0])
         for lit in line.strip().split(' ')[1:-1]:
             if lit[0] == '-':
-                print "  Not (%s)" % mapping[lit[1:]]
+                print("  Not (%s)" % mapping[lit[1:]])
             else:
-                print "  %s" % mapping[lit]
+                print("  %s" % mapping[lit])
 
 def do_popstats(mapping, output, disable_linears = False):
 
@@ -77,8 +77,8 @@ def do_popstats(mapping, output, disable_linears = False):
         values = data[1].strip().split(' ')[1:-1]
         #values = data[0].strip().split(' ')[1:]
     except IndexError:
-        print data
-        print data[1]
+        print(data)
+        print(data[1])
         raise IndexError
 
     actions = set()
@@ -86,7 +86,7 @@ def do_popstats(mapping, output, disable_linears = False):
     orderings = []
     supports = []
 
-    for v in filter(lambda x: '-' not in x, values):
+    for v in [x for x in values if '-' not in x]:
         if 'in plan' in mapping[v]:
             act = Action(None, None, None, mapping[v].split(' in plan')[0][1:-1])
             act_mapping[mapping[v].split(' in plan')[0]] = act
@@ -98,7 +98,7 @@ def do_popstats(mapping, output, disable_linears = False):
                              act_mapping[mapping[v].split(' supports ')[1].split(' with ')[0]],
                              mapping[v].split(' supports ')[1].split(' with ')[1]))
         else:
-            print "Error: Unrecognized mapping line: %s" % mapping[v]
+            print("Error: Unrecognized mapping line: %s" % mapping[v])
 
     pop = POP()
 
@@ -122,19 +122,19 @@ def do_popstats(mapping, output, disable_linears = False):
     #            print a2
 
     if not disable_linears:
-        print "\nLinearizations: %d\n" % count_linearizations(pop)
+        print("\nLinearizations: %d\n" % count_linearizations(pop))
 
-    print "\n%s\n" % str(pop)
-    print "Optimal: %s" % str(optimal)
+    print("\n%s\n" % str(pop))
+    print("Optimal: %s" % str(optimal))
 
 
 if __name__ == '__main__':
     import os
     myargs, flags = get_opts()
 
-    if not myargs.has_key('-map'):
-        print "Must include the map file:"
-        print USAGE_STRING
+    if '-map' not in myargs:
+        print("Must include the map file:")
+        print(USAGE_STRING)
         os._exit(1)
 
     map_file = myargs['-map']

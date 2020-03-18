@@ -178,7 +178,7 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
     for act in A:
         for p in act.precond:
             # Find the earliest adder of p that isn't threatened
-            dels_before = set(filter(lambda x: indices[x] < indices[act], deleters[p]))
+            dels_before = set([x for x in deleters[p] if indices[x] < indices[act]])
             dels_after = (deleters[p] - dels_before) - set([act])
 
             latest_deleter = -1
@@ -234,16 +234,16 @@ if __name__ == '__main__':
     import os
     myargs, flags = get_opts()
 
-    if not myargs.has_key('-domain'):
-        print "Must include domain to lift:"
-        print USAGE_STRING
+    if '-domain' not in myargs:
+        print("Must include domain to lift:")
+        print(USAGE_STRING)
         os._exit(1)
 
     dom = myargs['-domain']
 
-    if not myargs.has_key('-prob'):
-        print "Must include problem to lift:"
-        print USAGE_STRING
+    if '-prob' not in myargs:
+        print("Must include problem to lift:")
+        print(USAGE_STRING)
         os._exit(1)
 
     prob = myargs['-prob']
@@ -263,15 +263,15 @@ if __name__ == '__main__':
         layered_plan = parse_output_mp(mpout)
         pop = make_layered_POP(layered_plan, dom, prob, mpout)
     else:
-        print "Must include FF, Mercury, MP, or POPF output to parse:"
-        print USAGE_STRING
+        print("Must include FF, Mercury, MP, or POPF output to parse:")
+        print(USAGE_STRING)
         os._exit(1)
 
     if 'COUNT' in flags:
-        print "\nLinearizations: %d\n" % count_linearizations(pop)
+        print("\nLinearizations: %d\n" % count_linearizations(pop))
     if 'STATS' in flags:
-        print "\n%s\n" % str(pop)
+        print("\n%s\n" % str(pop))
     if 'DOT' in flags:
-        print pop.dot()
+        print(pop.dot())
     if 'SMALLDOT' in flags:
-        print pop.dot(True)
+        print(pop.dot(True))

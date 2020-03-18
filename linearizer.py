@@ -2,6 +2,7 @@
 import os
 import time
 import random
+from functools import reduce
 
 CACHE = {}
 
@@ -46,7 +47,7 @@ def count_linearizations(pop):
     for a in degrees:
         if pop.network.has_edge(a,a):
             degrees[a] = degrees[a] - 1
-    return count_plans(pop, set(), set(filter(lambda a: degrees[a] == 0, pop.network.nodes())))
+    return count_plans(pop, set(), set([a for a in pop.network.nodes() if degrees[a] == 0]))
 
 def compute_linflex(pop):
 
@@ -59,7 +60,7 @@ def compute_linflex(pop):
         return 0.0
 
     linears = float(count_linearizations(pop))
-    possible_linears = float(reduce(lambda x,y: x*y, range(1, acts+1), 1.0))
+    possible_linears = float(reduce(lambda x,y: x*y, list(range(1, acts+1)), 1.0))
 
     #print "LinFlex: %f / %f = %f" % (linears, possible_linears, linears / possible_linears)
 

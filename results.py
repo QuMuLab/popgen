@@ -7,6 +7,7 @@ from pop import POP
 from domains import GOOD_DOMAINS
 
 import networkx as nx
+from functools import reduce
 
 USAGE_STRING = """
 Usage: python results.py -<option> <argument> -<option> <argument> ... <FLAG> <FLAG> ...
@@ -84,9 +85,9 @@ def get_data(domain, counted):
         return (load_CSV("RESULTS/sat4j/%s.csv" % (domain))[1:], [])
 
 def filter_settings(data, setting):
-    return filter(lambda x: x[2] == str(setting[0]) and \
+    return [x for x in data if x[2] == str(setting[0]) and \
                             x[3] == str(setting[1]) and \
-                            x[4] == str(setting[2]), data)
+                            x[4] == str(setting[2])]
 
 def print_setting(s):
 
@@ -111,91 +112,91 @@ def print_setting(s):
 
 def print_summary(counted_data, uncounted_data):
 
-    good_counted_data = filter(lambda x: GOOD == get_execution_status(x), counted_data)
-    good_uncounted_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_counted_data = [x for x in counted_data if GOOD == get_execution_status(x)]
+    good_uncounted_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
     # Totals
-    print ""
-    print "Total trials (LCP): %d (%d)" % (len(uncounted_data), len(filter_settings(uncounted_data, LCP)))
-    print "Total success (LCP): %d (%d)" % (len(good_uncounted_data), len(filter_settings(good_uncounted_data, LCP)))
-    print "Total linears success (LCP): %d (%d)" % (len(good_counted_data), len(filter_settings(good_counted_data, LCP)))
+    print("")
+    print("Total trials (LCP): %d (%d)" % (len(uncounted_data), len(filter_settings(uncounted_data, LCP))))
+    print("Total success (LCP): %d (%d)" % (len(good_uncounted_data), len(filter_settings(good_uncounted_data, LCP))))
+    print("Total linears success (LCP): %d (%d)" % (len(good_counted_data), len(filter_settings(good_counted_data, LCP))))
 
     # How many times each setting mem'd out
-    print "\n  -{ Number of Encoding Mem-outs }-"
+    print("\n  -{ Number of Encoding Mem-outs }-")
     for s in SETTINGS:
-        print "%s: %d" % (print_setting(s), len(filter(lambda x: MEMOUT_LIFTER == get_execution_status(x), filter_settings(uncounted_data, s))))
+        print("%s: %d" % (print_setting(s), len([x for x in filter_settings(uncounted_data, s) if MEMOUT_LIFTER == get_execution_status(x)])))
 
     # How many times each setting mem'd out
-    print "\n  -{ Number of MAXSAT Mem-outs }-"
+    print("\n  -{ Number of MAXSAT Mem-outs }-")
     for s in SETTINGS:
-        print "%s: %d" % (print_setting(s), len(filter(lambda x: MEMOUT_MAXSAT == get_execution_status(x), filter_settings(uncounted_data, s))))
+        print("%s: %d" % (print_setting(s), len([x for x in filter_settings(uncounted_data, s) if MEMOUT_MAXSAT == get_execution_status(x)])))
 
     # How many times each timed out on encoding
-    print "\n  -{ Number of MAXSAT timeouts }-"
+    print("\n  -{ Number of MAXSAT timeouts }-")
     for s in SETTINGS:
-        print "%s: %d" % (print_setting(s), len(filter(lambda x: TIMEOUT_MAXSAT == get_execution_status(x), filter_settings(uncounted_data, s))))
+        print("%s: %d" % (print_setting(s), len([x for x in filter_settings(uncounted_data, s) if TIMEOUT_MAXSAT == get_execution_status(x)])))
 
     # Non-setting specific info
-    print ""
+    print("")
 
-    print "Number of times Lifted == Minimum Deordering: >= %d" % len(filter(lambda x: int(x[9]) == int(x[10]) and \
+    print("Number of times Lifted == Minimum Deordering: >= %d" % len([x for x in filter_settings(good_counted_data, MIN_DEORDERING) if int(x[9]) == int(x[10]) and \
                                                                                     int(x[11]) == int(x[12]) and \
-                                                                                    int(x[13]) == int(x[14]), filter_settings(good_counted_data, MIN_DEORDERING)))
+                                                                                    int(x[13]) == int(x[14])]))
 
-    print "Number of times Lifted == Minimum Reordering: >= %d" % len(filter(lambda x: int(x[9]) == int(x[10]) and \
+    print("Number of times Lifted == Minimum Reordering: >= %d" % len([x for x in filter_settings(good_counted_data, MIN_REORDERING) if int(x[9]) == int(x[10]) and \
                                                                                     int(x[11]) == int(x[12]) and \
-                                                                                    int(x[13]) == int(x[14]), filter_settings(good_counted_data, MIN_REORDERING)))
+                                                                                    int(x[13]) == int(x[14])]))
 
-    print "Number of times Lifted == LCP: >= %d" % len(filter(lambda x: int(x[9]) == int(x[10]) and \
+    print("Number of times Lifted == LCP: >= %d" % len([x for x in filter_settings(good_counted_data, LCP) if int(x[9]) == int(x[10]) and \
                                                                      int(x[11]) == int(x[12]) and \
-                                                                     int(x[13]) == int(x[14]), filter_settings(good_counted_data, LCP)))
+                                                                     int(x[13]) == int(x[14])]))
 
-    print "\nNumber of times Actions & Constraints matched, but linears didn't: >= %d" % len(filter(lambda x: x[9] == x[10] and \
+    print("\nNumber of times Actions & Constraints matched, but linears didn't: >= %d" % len([x for x in good_counted_data if x[9] == x[10] and \
                                                                                                          x[11] == x[12] and \
-                                                                                                         x[13] != x[14], good_counted_data))
+                                                                                                         x[13] != x[14]]))
 
-    print "\nNumber of times Minimum Deordering > Lifted (constraints): %d / %d" % (len(filter(lambda x: int(x[11]) > int(x[12]), filter_settings(good_uncounted_data, MIN_DEORDERING))), len(filter_settings(good_uncounted_data, MIN_DEORDERING)))
-    print "Number of times Minimum Reordering > Lifted (constraints): %d / %d" % (len(filter(lambda x: int(x[11]) > int(x[12]), filter_settings(good_uncounted_data, MIN_REORDERING))), len(filter_settings(good_uncounted_data, MIN_REORDERING)))
-    print "Number of times LCP > Lifted (actions): %d / %d" % (len(filter(lambda x: int(x[9]) > int(x[10]), filter_settings(good_uncounted_data, LCP))), len(filter_settings(good_uncounted_data, LCP)))
-    print "Number of times LCP > Lifted (constraints or actions): %d / %d" % (len(filter(lambda x: int(x[11]) > int(x[12]) or int(x[9]) > int(x[10]), filter_settings(good_uncounted_data, LCP))), len(filter_settings(good_uncounted_data, LCP)))
-    print ""
+    print("\nNumber of times Minimum Deordering > Lifted (constraints): %d / %d" % (len([x for x in filter_settings(good_uncounted_data, MIN_DEORDERING) if int(x[11]) > int(x[12])]), len(filter_settings(good_uncounted_data, MIN_DEORDERING))))
+    print("Number of times Minimum Reordering > Lifted (constraints): %d / %d" % (len([x for x in filter_settings(good_uncounted_data, MIN_REORDERING) if int(x[11]) > int(x[12])]), len(filter_settings(good_uncounted_data, MIN_REORDERING))))
+    print("Number of times LCP > Lifted (actions): %d / %d" % (len([x for x in filter_settings(good_uncounted_data, LCP) if int(x[9]) > int(x[10])]), len(filter_settings(good_uncounted_data, LCP))))
+    print("Number of times LCP > Lifted (constraints or actions): %d / %d" % (len([x for x in filter_settings(good_uncounted_data, LCP) if int(x[11]) > int(x[12]) or int(x[9]) > int(x[10])]), len(filter_settings(good_uncounted_data, LCP))))
+    print("")
 
 def lcp_stats(counted_data, uncounted_data):
 
-    good_counted_data = filter(lambda x: GOOD == get_execution_status(x), counted_data)
-    good_uncounted_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_counted_data = [x for x in counted_data if GOOD == get_execution_status(x)]
+    good_uncounted_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
-    print ""
-    print "Number of times LCP reduced the # of actions: %d" % len(filter(lambda x: int(x[10]) < int(x[9]), filter_settings(good_uncounted_data, LCP)))
-    print "Number of times LCP reduced the orderings, but not actions: %d" % len(filter(lambda x: x[10] == x[9] and int(x[12]) < int(x[11]), filter_settings(good_uncounted_data, LCP)))
-    print "Number of times LCP improved the # of linearizations: >= %d" % len(filter(lambda x: int(x[15]) > 0, filter_settings(good_counted_data, LCP)))
-    print ""
+    print("")
+    print("Number of times LCP reduced the # of actions: %d" % len([x for x in filter_settings(good_uncounted_data, LCP) if int(x[10]) < int(x[9])]))
+    print("Number of times LCP reduced the orderings, but not actions: %d" % len([x for x in filter_settings(good_uncounted_data, LCP) if x[10] == x[9] and int(x[12]) < int(x[11])]))
+    print("Number of times LCP improved the # of linearizations: >= %d" % len([x for x in filter_settings(good_counted_data, LCP) if int(x[15]) > 0]))
+    print("")
 
 def plot_relinears(counted_data, setting, disable_ones = True):
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), filter_settings(counted_data, setting))
+    good_data = [x for x in filter_settings(counted_data, setting) if GOOD == get_execution_status(x)]
 
     xs = [float(line[13]) for line in good_data]
     ys = [float(line[14]) for line in good_data]
 
     if disable_ones:
-        new_y = filter(lambda x: x != 1.0, sorted([ys[i] / xs[i] for i in range(len(xs))]))
+        new_y = [x for x in sorted([ys[i] / xs[i] for i in range(len(xs))]) if x != 1.0]
     else:
         new_y = sorted([ys[i] / xs[i] for i in range(len(xs))])
 
     if LCP == setting:
-        new_y = filter(lambda x: x >= 1, new_y)
+        new_y = [x for x in new_y if x >= 1]
 
     new_x = [i+1 for i in range(len(new_y))]
 
-    print "\nComputing linearization comparison for setting: %s" % print_setting(setting)
-    print "Data points: %d" % len(xs)
-    print "Same linearizations: %d" % (len(xs) - len(new_x))
-    print "Different linearizations: %d" % len(new_x)
-    print "Mean / std linearization ratio: %f +- %f" % (mean(sorted([ys[i] / xs[i] for i in range(len(xs))])),
-                                                        std(sorted([ys[i] / xs[i] for i in range(len(xs))])))
-    print "Min / Max: %f / %f" % (sorted([ys[i] / xs[i] for i in range(len(xs))])[0], sorted([ys[i] / xs[i] for i in range(len(xs))])[-1])
-    print ""
+    print("\nComputing linearization comparison for setting: %s" % print_setting(setting))
+    print("Data points: %d" % len(xs))
+    print("Same linearizations: %d" % (len(xs) - len(new_x)))
+    print("Different linearizations: %d" % len(new_x))
+    print("Mean / std linearization ratio: %f +- %f" % (mean(sorted([ys[i] / xs[i] for i in range(len(xs))])),
+                                                        std(sorted([ys[i] / xs[i] for i in range(len(xs))]))))
+    print("Min / Max: %f / %f" % (sorted([ys[i] / xs[i] for i in range(len(xs))])[0], sorted([ys[i] / xs[i] for i in range(len(xs))])[-1]))
+    print("")
 
     if LCP == setting:
         ylabel = 'Ratio of Linearizations'
@@ -209,7 +210,7 @@ def plot_linears(counted_data):
 
     from operator import itemgetter
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), counted_data)
+    good_data = [x for x in counted_data if GOOD == get_execution_status(x)]
 
     # Only keep the data that has a solution for all parts
     solved_by_lcp = set(["%s/%s" % (item[0], item[1]) for item in filter_settings(good_data, LCP)])
@@ -218,7 +219,7 @@ def plot_linears(counted_data):
 
     solved_by_all = solved_by_lcp & solved_by_md & solved_by_mr
 
-    good_data = filter(lambda x: "%s/%s" % (x[0], x[1]) in solved_by_all, good_data)
+    good_data = [x for x in good_data if "%s/%s" % (x[0], x[1]) in solved_by_all]
 
     lcp_mapping = {}
     md_mapping = {}
@@ -226,9 +227,9 @@ def plot_linears(counted_data):
     prob_time_list = []
 
     for prob in solved_by_all:
-        lcp_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, LCP))[0][14])
-        md_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_DEORDERING))[0][14])
-        mr_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_REORDERING))[0][14])
+        lcp_mapping[prob] = float([x for x in filter_settings(good_data, LCP) if "%s/%s" % (x[0], x[1]) == prob][0][14])
+        md_mapping[prob] = float([x for x in filter_settings(good_data, MIN_DEORDERING) if "%s/%s" % (x[0], x[1]) == prob][0][14])
+        mr_mapping[prob] = float([x for x in filter_settings(good_data, MIN_REORDERING) if "%s/%s" % (x[0], x[1]) == prob][0][14])
         #prob_time_list.append((prob, lcp_mapping[prob]))
         prob_time_list.append((prob, md_mapping[prob]))
 
@@ -248,7 +249,7 @@ def plot_timing(uncounted_data):
 
     from operator import itemgetter
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
     # Only keep the data that has a solution for all parts
     solved_by_lcp = set(["%s/%s" % (item[0], item[1]) for item in filter_settings(good_data, LCP)])
@@ -257,7 +258,7 @@ def plot_timing(uncounted_data):
 
     solved_by_all = solved_by_lcp & solved_by_md & solved_by_mr
 
-    good_data = filter(lambda x: "%s/%s" % (x[0], x[1]) in solved_by_all, good_data)
+    good_data = [x for x in good_data if "%s/%s" % (x[0], x[1]) in solved_by_all]
 
     lcp_mapping = {}
     md_mapping = {}
@@ -266,10 +267,10 @@ def plot_timing(uncounted_data):
     prob_time_list = []
 
     for prob in solved_by_all:
-        lcp_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, LCP))[0][7])
-        md_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_DEORDERING))[0][7])
-        mr_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_REORDERING))[0][7])
-        rx_mapping[prob] = float(filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, LCP))[0][5])
+        lcp_mapping[prob] = float([x for x in filter_settings(good_data, LCP) if "%s/%s" % (x[0], x[1]) == prob][0][7])
+        md_mapping[prob] = float([x for x in filter_settings(good_data, MIN_DEORDERING) if "%s/%s" % (x[0], x[1]) == prob][0][7])
+        mr_mapping[prob] = float([x for x in filter_settings(good_data, MIN_REORDERING) if "%s/%s" % (x[0], x[1]) == prob][0][7])
+        rx_mapping[prob] = float([x for x in filter_settings(good_data, LCP) if "%s/%s" % (x[0], x[1]) == prob][0][5])
         prob_time_list.append((prob, rx_mapping[prob]))
 
 
@@ -288,24 +289,24 @@ def plot_timing(uncounted_data):
 
 def compute_timing(uncounted_data):
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
-    print ""
-    print "  -{ Mean / std for (encoding time) and (maxsat time) }-"
+    print("")
+    print("  -{ Mean / std for (encoding time) and (maxsat time) }-")
 
     for s in SETTINGS:
-        print "%s: (%f +- %f) / (%f +- %f)" % (print_setting(s), mean([float(item[6]) for item in filter_settings(good_data, s)]),
+        print("%s: (%f +- %f) / (%f +- %f)" % (print_setting(s), mean([float(item[6]) for item in filter_settings(good_data, s)]),
                                                                 median([float(item[6]) for item in filter_settings(good_data, s)]),
                                                                 mean([float(item[7]) for item in filter_settings(good_data, s)]),
-                                                                median([float(item[7]) for item in filter_settings(good_data, s)]))
-    print ""
-    print "Min maxsat time: %f" % min([float(item[7]) for item in good_data])
-    print "Max maxsat time: %f" % max([float(item[7]) for item in good_data])
-    print ""
+                                                                median([float(item[7]) for item in filter_settings(good_data, s)])))
+    print("")
+    print("Min maxsat time: %f" % min([float(item[7]) for item in good_data]))
+    print("Max maxsat time: %f" % max([float(item[7]) for item in good_data]))
+    print("")
 
 def maxsat_stats(uncounted_data):
 
-    good_data = filter(lambda x: (TIMEOUT_MAXSAT == get_execution_status(x)) or (GOOD == get_execution_status(x)), uncounted_data)
+    good_data = [x for x in uncounted_data if (TIMEOUT_MAXSAT == get_execution_status(x)) or (GOOD == get_execution_status(x))]
 
     # Only keep the data that has a solution for all parts
     solved_by_lcp = set(["%s/%s" % (item[0], item[1]) for item in filter_settings(good_data, LCP)])
@@ -314,7 +315,7 @@ def maxsat_stats(uncounted_data):
 
     solved_by_all = solved_by_lcp & solved_by_md & solved_by_mr
 
-    good_data = filter(lambda x: "%s/%s" % (x[0], x[1]) in solved_by_all, good_data)
+    good_data = [x for x in good_data if "%s/%s" % (x[0], x[1]) in solved_by_all]
 
     relaxing_times = [float(item[5]) for item in filter_settings(good_data, LCP)]
 
@@ -327,20 +328,20 @@ def maxsat_stats(uncounted_data):
     maxsat_clauses_mr = [float(item[14]) for item in filter_settings(good_data, MIN_REORDERING)]
     maxsat_clauses_lcp = [float(item[14]) for item in filter_settings(good_data, LCP)]
 
-    print ""
-    print "%.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f" % ( \
+    print("")
+    print("%.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f & %.2f" % ( \
                             mean(relaxing_times), mean(maxsat_times_md), mean(maxsat_times_mr), mean(maxsat_times_lcp),
                             median(relaxing_times), median(maxsat_times_md), median(maxsat_times_mr), median(maxsat_times_lcp),
-                            mean(maxsat_vars), mean(maxsat_clauses_md), mean(maxsat_clauses_mr), mean(maxsat_clauses_lcp))
-    print ""
-    print "STD of vars: %.2f" % std(maxsat_vars)
-    print "Under 5 seconds: %d / %d" % (len(filter(lambda x: float(x[7]) < 5.0, good_data)), len(good_data))
-    print "Max Relaxer Time: %.2f" % max(relaxing_times)
-    print ""
+                            mean(maxsat_vars), mean(maxsat_clauses_md), mean(maxsat_clauses_mr), mean(maxsat_clauses_lcp)))
+    print("")
+    print("STD of vars: %.2f" % std(maxsat_vars))
+    print("Under 5 seconds: %d / %d" % (len([x for x in good_data if float(x[7]) < 5.0]), len(good_data)))
+    print("Max Relaxer Time: %.2f" % max(relaxing_times))
+    print("")
 
 def compute_timing_relative(uncounted_data):
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
     # Only keep the data that has a solution for all parts
     solved_by_lcp = set(["%s/%s" % (item[0], item[1]) for item in filter_settings(good_data, LCP)])
@@ -349,37 +350,37 @@ def compute_timing_relative(uncounted_data):
 
     solved_by_all = solved_by_lcp & solved_by_md & solved_by_mr
 
-    good_data = filter(lambda x: "%s/%s" % (x[0], x[1]) in solved_by_all, good_data)
+    good_data = [x for x in good_data if "%s/%s" % (x[0], x[1]) in solved_by_all]
 
     lcp_mapping = {}
     md_mapping = {}
     mr_mapping = {}
 
     for prob in solved_by_all:
-        lcp_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, LCP))[0]
-        md_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_DEORDERING))[0]
-        mr_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_REORDERING))[0]
+        lcp_mapping[prob] = [x for x in filter_settings(good_data, LCP) if "%s/%s" % (x[0], x[1]) == prob][0]
+        md_mapping[prob] = [x for x in filter_settings(good_data, MIN_DEORDERING) if "%s/%s" % (x[0], x[1]) == prob][0]
+        mr_mapping[prob] = [x for x in filter_settings(good_data, MIN_REORDERING) if "%s/%s" % (x[0], x[1]) == prob][0]
 
     lcp_maxsat_increase = [float(lcp_mapping[prob][7]) / float(lcp_mapping[prob][7]) for prob in solved_by_all]
     md_maxsat_increase = [float(md_mapping[prob][7]) / float(lcp_mapping[prob][7]) for prob in solved_by_all]
     mr_maxsat_increase = [float(mr_mapping[prob][7]) / float(lcp_mapping[prob][7]) for prob in solved_by_all]
 
-    print "\nData Size: %d\n" % len(solved_by_all)
-    print "  -{ Mean / std for (maxsat time) }-"
+    print("\nData Size: %d\n" % len(solved_by_all))
+    print("  -{ Mean / std for (maxsat time) }-")
 
-    print "lcp: (%f +- %f)" % (mean(lcp_maxsat_increase), std(lcp_maxsat_increase))
-    print "md: (%f +- %f)" % (mean(md_maxsat_increase), std(md_maxsat_increase))
-    print "mr: (%f +- %f)" % (mean(mr_maxsat_increase), std(mr_maxsat_increase))
+    print("lcp: (%f +- %f)" % (mean(lcp_maxsat_increase), std(lcp_maxsat_increase)))
+    print("md: (%f +- %f)" % (mean(md_maxsat_increase), std(md_maxsat_increase)))
+    print("mr: (%f +- %f)" % (mean(mr_maxsat_increase), std(mr_maxsat_increase)))
 
-    print ""
-    print "Min maxsat time: %f" % min([float(item[7]) for item in good_data])
-    print "Max maxsat time: %f" % max([float(item[7]) for item in good_data])
-    print ""
+    print("")
+    print("Min maxsat time: %f" % min([float(item[7]) for item in good_data]))
+    print("Max maxsat time: %f" % max([float(item[7]) for item in good_data]))
+    print("")
 
 def compute_mean_act_const(uncounted_data):
     return compute_mean_act_const_increase(uncounted_data)
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
     # Only keep the data that has a solution for all parts
     solved_by_lcp = set(["%s/%s" % (item[0], item[1]) for item in filter_settings(good_data, LCP)])
@@ -388,34 +389,34 @@ def compute_mean_act_const(uncounted_data):
 
     solved_by_all = solved_by_lcp & solved_by_md & solved_by_mr
 
-    good_data = filter(lambda x: "%s/%s" % (x[0], x[1]) in solved_by_all, good_data)
+    good_data = [x for x in good_data if "%s/%s" % (x[0], x[1]) in solved_by_all]
 
-    print "\n%f & %f & %f & %f & %f & %f" % (mean([float(item[9]) for item in filter_settings(good_data, LCP)]),
+    print("\n%f & %f & %f & %f & %f & %f" % (mean([float(item[9]) for item in filter_settings(good_data, LCP)]),
                                            mean([float(item[10]) for item in filter_settings(good_data, LCP)]),
                                            mean([float(item[11]) for item in filter_settings(good_data, LCP)]),
                                            mean([float(item[12]) for item in filter_settings(good_data, MIN_DEORDERING)]),
                                            mean([float(item[12]) for item in filter_settings(good_data, MIN_REORDERING)]),
-                                           mean([float(item[12]) for item in filter_settings(good_data, LCP)]))
+                                           mean([float(item[12]) for item in filter_settings(good_data, LCP)])))
 
-    print "\nData Size: %d / %d\n" % (len(solved_by_all), len(solved_by_lcp | solved_by_md | solved_by_mr))
+    print("\nData Size: %d / %d\n" % (len(solved_by_all), len(solved_by_lcp | solved_by_md | solved_by_mr)))
 
-    print "  -{ Mean / std actions and constraints }-"
+    print("  -{ Mean / std actions and constraints }-")
 
-    print "relaxer: (%f +- %f) / (%f +- %f)" % (mean([float(item[9]) for item in filter_settings(good_data, LCP)]),
+    print("relaxer: (%f +- %f) / (%f +- %f)" % (mean([float(item[9]) for item in filter_settings(good_data, LCP)]),
                                                std([float(item[9]) for item in filter_settings(good_data, LCP)]),
                                                mean([float(item[11]) for item in filter_settings(good_data, LCP)]),
-                                               std([float(item[11]) for item in filter_settings(good_data, LCP)]))
+                                               std([float(item[11]) for item in filter_settings(good_data, LCP)])))
 
     for s in [MIN_DEORDERING, MIN_REORDERING, LCP]:
-        print "%s: (%f +- %f) / (%f +- %f)" % (print_setting(s), mean([float(item[10]) for item in filter_settings(good_data, s)]),
+        print("%s: (%f +- %f) / (%f +- %f)" % (print_setting(s), mean([float(item[10]) for item in filter_settings(good_data, s)]),
                                                                 std([float(item[10]) for item in filter_settings(good_data, s)]),
                                                                 mean([float(item[12]) for item in filter_settings(good_data, s)]),
-                                                                std([float(item[12]) for item in filter_settings(good_data, s)]))
-    print ""
+                                                                std([float(item[12]) for item in filter_settings(good_data, s)])))
+    print("")
 
 def compute_mean_act_const_increase(uncounted_data):
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), uncounted_data)
+    good_data = [x for x in uncounted_data if GOOD == get_execution_status(x)]
 
     # Only keep the data that has a solution for all parts
     #solved_by_lcp = set(["%s/%s" % (item[0], item[1]) for item in filter_settings(good_data, LCP)])
@@ -456,18 +457,18 @@ def compute_mean_act_const_increase(uncounted_data):
     rx_mapping = {}
 
     for prob in solved_by_lcp:
-        lcp_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, LCP))[0]
+        lcp_mapping[prob] = [x for x in filter_settings(good_data, LCP) if "%s/%s" % (x[0], x[1]) == prob][0]
 
     for prob in solved_by_md:
-        md_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_DEORDERING))[0]
+        md_mapping[prob] = [x for x in filter_settings(good_data, MIN_DEORDERING) if "%s/%s" % (x[0], x[1]) == prob][0]
 
     for prob in solved_by_mr:
-        mr_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_REORDERING))[0]
+        mr_mapping[prob] = [x for x in filter_settings(good_data, MIN_REORDERING) if "%s/%s" % (x[0], x[1]) == prob][0]
 
     for prob in solved_by_md:
-        rx_mapping[prob] = filter(lambda x: "%s/%s" % (x[0], x[1]) == prob, filter_settings(good_data, MIN_DEORDERING))[0]
+        rx_mapping[prob] = [x for x in filter_settings(good_data, MIN_DEORDERING) if "%s/%s" % (x[0], x[1]) == prob][0]
 
-    solved_action_increase = filter(lambda prob: float(lcp_mapping[prob][9]) > float(lcp_mapping[prob][10]), solved_by_lcp)
+    solved_action_increase = [prob for prob in solved_by_lcp if float(lcp_mapping[prob][9]) > float(lcp_mapping[prob][10])]
     lcp_action_decrease = [1 - (float(lcp_mapping[prob][10]) / float(lcp_mapping[prob][9])) for prob in solved_action_increase]
     lcp_action_decrease_all = [1 - (float(lcp_mapping[prob][10]) / float(lcp_mapping[prob][9])) for prob in solved_by_lcp]
 
@@ -491,37 +492,37 @@ def compute_mean_act_const_increase(uncounted_data):
     md_opt = [{'True':1,'False':0}[md_mapping[prob][13]] for prob in solved_by_md]
     mr_opt = [{'True':1,'False':0}[mr_mapping[prob][13]] for prob in solved_by_mr]
 
-    print "\nAll problems:\t %d" % len(all_problems)
-    print "Solved by all:\t %d" % len(solved_by_all)
+    print("\nAll problems:\t %d" % len(all_problems))
+    print("Solved by all:\t %d" % len(solved_by_all))
 
-    print "  -{ Action Improvement (only improvements) }-"
-    print "Occurrences:\t %d / %d = %f" % (len(solved_action_increase),
+    print("  -{ Action Improvement (only improvements) }-")
+    print("Occurrences:\t %d / %d = %f" % (len(solved_action_increase),
                                            len(solved_by_lcp),
-                                           float(len(solved_action_increase)) / float(len(solved_by_lcp)))
-    print "Arith. mean:\t %f +/- %f" % (mean(lcp_action_decrease), std(lcp_action_decrease))
-    print "Geometric mean:\t %f" % product(lcp_action_decrease)**(1.0 / len(lcp_action_decrease))
+                                           float(len(solved_action_increase)) / float(len(solved_by_lcp))))
+    print("Arith. mean:\t %f +/- %f" % (mean(lcp_action_decrease), std(lcp_action_decrease)))
+    print("Geometric mean:\t %f" % product(lcp_action_decrease)**(1.0 / len(lcp_action_decrease)))
 
-    print "\n  -{ Action Improvement (all) }-"
-    print "Occurrences:\t %d" % len(solved_by_lcp)
-    print "Arith. mean:\t %f +/- %f" % (mean(lcp_action_decrease_all), std(lcp_action_decrease_all))
-    print "Geometric mean:\t %f" % product(lcp_action_decrease_all)**(1.0 / len(lcp_action_decrease_all))
+    print("\n  -{ Action Improvement (all) }-")
+    print("Occurrences:\t %d" % len(solved_by_lcp))
+    print("Arith. mean:\t %f +/- %f" % (mean(lcp_action_decrease_all), std(lcp_action_decrease_all)))
+    print("Geometric mean:\t %f" % product(lcp_action_decrease_all)**(1.0 / len(lcp_action_decrease_all)))
 
-    print "\n  -{ Average Flex (Arithmetic) }-"
-    print "LCP (%d): %f +/- %f" % (len(lcp_flex), mean(lcp_flex), std(lcp_flex))
-    print "MR (%d):  %f +/- %f" % (len(mr_flex), mean(mr_flex), std(mr_flex))
-    print "MD (%d):  %f +/- %f" % (len(md_flex), mean(md_flex), std(md_flex))
-    print "RX (%d):  %f +/- %f" % (len(rx_flex), mean(rx_flex), std(rx_flex))
+    print("\n  -{ Average Flex (Arithmetic) }-")
+    print("LCP (%d): %f +/- %f" % (len(lcp_flex), mean(lcp_flex), std(lcp_flex)))
+    print("MR (%d):  %f +/- %f" % (len(mr_flex), mean(mr_flex), std(mr_flex)))
+    print("MD (%d):  %f +/- %f" % (len(md_flex), mean(md_flex), std(md_flex)))
+    print("RX (%d):  %f +/- %f" % (len(rx_flex), mean(rx_flex), std(rx_flex)))
 
-    print "\n  -{ Average Flex (Geometric) }-"
-    print "LCP (%d): %f" % (len(lcp_flex), product(lcp_flex)**(1.0 / len(lcp_flex)))
-    print "MR (%d):  %f" % (len(mr_flex), product(mr_flex)**(1.0 / len(mr_flex)))
-    print "MD (%d):  %f" % (len(md_flex), product(md_flex)**(1.0 / len(md_flex)))
-    print "RX (%d):  %f" % (len(rx_flex), product(rx_flex)**(1.0 / len(rx_flex)))
+    print("\n  -{ Average Flex (Geometric) }-")
+    print("LCP (%d): %f" % (len(lcp_flex), product(lcp_flex)**(1.0 / len(lcp_flex))))
+    print("MR (%d):  %f" % (len(mr_flex), product(mr_flex)**(1.0 / len(mr_flex))))
+    print("MD (%d):  %f" % (len(md_flex), product(md_flex)**(1.0 / len(md_flex))))
+    print("RX (%d):  %f" % (len(rx_flex), product(rx_flex)**(1.0 / len(rx_flex))))
 
-    print "\n  -{ Instances Proved Optimal }-"
-    print "LCP: %d / %d = %f" % (sum(lcp_opt), len(lcp_flex), float(sum(lcp_opt)) / float(len(lcp_flex)))
-    print "MR: %d / %d = %f" % (sum(mr_opt), len(mr_flex), float(sum(mr_opt)) / float(len(mr_flex)))
-    print "MD: %d / %d = %f" % (sum(md_opt), len(md_flex), float(sum(md_opt)) / float(len(md_flex)))
+    print("\n  -{ Instances Proved Optimal }-")
+    print("LCP: %d / %d = %f" % (sum(lcp_opt), len(lcp_flex), float(sum(lcp_opt)) / float(len(lcp_flex))))
+    print("MR: %d / %d = %f" % (sum(mr_opt), len(mr_flex), float(sum(mr_opt)) / float(len(mr_flex))))
+    print("MD: %d / %d = %f" % (sum(md_opt), len(md_flex), float(sum(md_opt)) / float(len(md_flex))))
 
     #print "  -{ Mean increase actions and constraints }-"
 
@@ -536,7 +537,7 @@ def compute_mean_act_const_increase(uncounted_data):
     #print "mr: (%f +- %f)" % (mean(mr_ordering_increase),
     #                         std(mr_ordering_increase))
 
-    print
+    print()
 
 
 def compare_planners(counted_data, uncounted_data):
@@ -544,12 +545,12 @@ def compare_planners(counted_data, uncounted_data):
     uncounted_ff = filter_settings(uncounted_data[0], LCP)
     uncounted_popf = filter_settings(uncounted_data[1], LCP)
 
-    _solved_ff = set(["%s-%s" % (item[0], item[1]) for item in filter(lambda x: GOOD == get_execution_status(x), uncounted_ff)])
-    _solved_popf = set(["%s-%s" % (item[0], item[1]) for item in filter(lambda x: GOOD == get_execution_status(x), uncounted_popf)])
+    _solved_ff = set(["%s-%s" % (item[0], item[1]) for item in [x for x in uncounted_ff if GOOD == get_execution_status(x)]])
+    _solved_popf = set(["%s-%s" % (item[0], item[1]) for item in [x for x in uncounted_popf if GOOD == get_execution_status(x)]])
 
     mutual_solved = _solved_ff & _solved_popf
-    solved_ff = filter(lambda x: ("%s-%s" % (x[0], x[1])) in mutual_solved, uncounted_ff)
-    solved_popf = filter(lambda x: ("%s-%s" % (x[0], x[1])) in mutual_solved, uncounted_popf)
+    solved_ff = [x for x in uncounted_ff if ("%s-%s" % (x[0], x[1])) in mutual_solved]
+    solved_popf = [x for x in uncounted_popf if ("%s-%s" % (x[0], x[1])) in mutual_solved]
 
     ff_results = {}
     popf_results = {}
@@ -566,7 +567,7 @@ def compare_planners(counted_data, uncounted_data):
     ordering_total_ff = 0.0
     ordering_total_popf = 0.0
 
-    print ""
+    print("")
 
     popf_bet = 0
     ff_bet = 0
@@ -586,30 +587,30 @@ def compare_planners(counted_data, uncounted_data):
         ordering_total_ff += float(ff_results[prob][12]) / float(ff_results[prob][11])
         ordering_total_popf += float(popf_results[prob][12]) / float(popf_results[prob][11])
 
-    print "\nMean Relative Action: %f" % (action_total / float(len(mutual_solved)))
-    print "Mean Relative Ordering: %f" % (ordering_total / float(len(mutual_solved)))
-    print "POPF better / worse: %d / %d" % (popf_bet, ff_bet)
-    print "Mean Relative FF Action: %f" % (action_total_ff / float(len(mutual_solved)))
-    print "Mean Relative POPF Action: %f" % (action_total_popf / float(len(mutual_solved)))
-    print "Mean Relative FF Ordering: %f" % (ordering_total_ff / float(len(mutual_solved)))
-    print "Mean Relative POPF Ordering: %f" % (ordering_total_popf / float(len(mutual_solved)))
+    print("\nMean Relative Action: %f" % (action_total / float(len(mutual_solved))))
+    print("Mean Relative Ordering: %f" % (ordering_total / float(len(mutual_solved))))
+    print("POPF better / worse: %d / %d" % (popf_bet, ff_bet))
+    print("Mean Relative FF Action: %f" % (action_total_ff / float(len(mutual_solved))))
+    print("Mean Relative POPF Action: %f" % (action_total_popf / float(len(mutual_solved))))
+    print("Mean Relative FF Ordering: %f" % (ordering_total_ff / float(len(mutual_solved))))
+    print("Mean Relative POPF Ordering: %f" % (ordering_total_popf / float(len(mutual_solved))))
 
-    print ""
-    print "FF Solved: %d / %d" % (len(_solved_ff), len(set(["%s-%s" % (item[0], item[1]) for item in uncounted_ff])))
-    print "POPF Solved: %d / %d" % (len(_solved_popf), len(set(["%s-%s" % (item[0], item[1]) for item in uncounted_popf])))
-    print "Mutually Solved: %d" % len(mutual_solved)
-    print ""
+    print("")
+    print("FF Solved: %d / %d" % (len(_solved_ff), len(set(["%s-%s" % (item[0], item[1]) for item in uncounted_ff]))))
+    print("POPF Solved: %d / %d" % (len(_solved_popf), len(set(["%s-%s" % (item[0], item[1]) for item in uncounted_popf]))))
+    print("Mutually Solved: %d" % len(mutual_solved))
+    print("")
 
 
 def do_plotalltimes():
     all_data = fetch_all_data()[1][0]
-    good_data = filter(lambda x: GOOD == get_execution_status(x), all_data)
-    kk_data = filter(lambda x: x <= 600, [float(item[5]) for item in filter_settings(all_data, LCP)])
-    md_data = filter(lambda x: x <= 1801, [float(item[7]) + float(item[6]) for item in filter_settings(good_data, MIN_DEORDERING)])
-    mr_data = filter(lambda x: x <= 1801, [float(item[7]) + float(item[6]) for item in filter_settings(good_data, MIN_REORDERING)])
-    lcp_data = filter(lambda x: x <= 1801, [float(item[7]) + float(item[6]) for item in filter_settings(good_data, LCP)])
+    good_data = [x for x in all_data if GOOD == get_execution_status(x)]
+    kk_data = [x for x in [float(item[5]) for item in filter_settings(all_data, LCP)] if x <= 600]
+    md_data = [x for x in [float(item[7]) + float(item[6]) for item in filter_settings(good_data, MIN_DEORDERING)] if x <= 1801]
+    mr_data = [x for x in [float(item[7]) + float(item[6]) for item in filter_settings(good_data, MIN_REORDERING)] if x <= 1801]
+    lcp_data = [x for x in [float(item[7]) + float(item[6]) for item in filter_settings(good_data, LCP)] if x <= 1801]
 
-    print "Under 10: %d / %d" % (len(filter(lambda x: x < 10, md_data + mr_data + lcp_data)), len(md_data + mr_data + lcp_data))
+    print("Under 10: %d / %d" % (len([x for x in md_data + mr_data + lcp_data if x < 10]), len(md_data + mr_data + lcp_data)))
 
     x1,y1 = create_time_profile(kk_data)
     x2,y2 = create_time_profile(md_data)
@@ -622,24 +623,24 @@ def do_plotalltimes():
 
 def mip_vs_sat4j(sat4j_data, mip_data):
 
-    good_data = filter(lambda x: GOOD == get_execution_status(x), sat4j_data)
+    good_data = [x for x in sat4j_data if GOOD == get_execution_status(x)]
     mr_data = [float(item[7]) + float(item[6]) for item in filter_settings(good_data, MIN_REORDERING)]
-    mip_data = [float(item[2]) + float(item[3]) for item in filter(lambda x: float(x[3]) > 0, mip_data)]
+    mip_data = [float(item[2]) + float(item[3]) for item in [x for x in mip_data if float(x[3]) > 0]]
 
     x1,y1 = create_time_profile(mr_data)
     x2,y2 = create_time_profile(mip_data)
 
     #print len(x1)
     #print len(x2)
-    print "x1 = %s" % str(x1)
-    print "y1 = %s" % str(y1)
-    print "x2 = %s" % str(x2)
-    print "y2 = %s" % str(y2)
-    print 'plot([x1,x2], [y1,y2], x_label = "Time (s)", y_label = "Problems Solved", no_scatter = True, xyline = False, names = ["MR", "MIP"], x_log = True, col = False)'
+    print("x1 = %s" % str(x1))
+    print("y1 = %s" % str(y1))
+    print("x2 = %s" % str(x2))
+    print("y2 = %s" % str(y2))
+    print('plot([x1,x2], [y1,y2], x_label = "Time (s)", y_label = "Problems Solved", no_scatter = True, xyline = False, names = ["MR", "MIP"], x_log = True, col = False)')
     for i in range(len(x1)):
-        print "MR,%f,%f" % (x1[i], y1[i])
+        print("MR,%f,%f" % (x1[i], y1[i]))
     for i in range(len(x2)):
-        print "MIP,%f,%f" % (x2[i], y2[i])
+        print("MIP,%f,%f" % (x2[i], y2[i]))
 
     plot([x1,x2], [y1,y2], x_label = "Time (s)", y_label = "Problems Solved", no_scatter = True,
          xyline = False, names = ['MR', 'MILP'], x_log = True, col = False)
@@ -667,13 +668,13 @@ if __name__ == '__main__':
 
             all_counted_data, all_uncounted_data = fetch_all_data()
 
-            print "\n    { FF }"
+            print("\n    { FF }")
             print_summary(all_counted_data[0], all_uncounted_data[0])
             #print "\n\n    { POPF }"
             #print_summary(all_counted_data[1], all_uncounted_data[1])
 
         else:
-            print "\n    { FF }"
+            print("\n    { FF }")
             print_summary(get_data(myargs['-summary'], True)[0], get_data(myargs['-summary'], False)[0])
             #print "\n\n    { POPF }"
             #print_summary(get_data(myargs['-summary'], True)[1], get_data(myargs['-summary'], False)[1])
@@ -683,16 +684,16 @@ if __name__ == '__main__':
 
             all_counted_data, all_uncounted_data = fetch_all_data()
 
-            print "\n    { FF }"
+            print("\n    { FF }")
             lcp_stats(all_counted_data[0], all_uncounted_data[0])
-            print "\n\n    { POPF }"
+            print("\n\n    { POPF }")
             lcp_stats(all_counted_data[1], all_uncounted_data[1])
 
         else:
 
-            print "\n    { FF }"
+            print("\n    { FF }")
             lcp_stats(get_data(myargs['-lcpstats'], True)[0], get_data(myargs['-lcpstats'], False)[0])
-            print "\n\n    { POPF }"
+            print("\n\n    { POPF }")
             lcp_stats(get_data(myargs['-lcpstats'], True)[1], get_data(myargs['-lcpstats'], False)[1])
 
     elif '-plotlcplinears' in myargs:
@@ -762,5 +763,5 @@ if __name__ == '__main__':
         do_plotalltimes()
 
     else:
-        print USAGE_STRING
+        print(USAGE_STRING)
 

@@ -116,19 +116,19 @@ def encode_POP(dom, prob, pop, output, flags):
     # Satisfy all the preconditions
     for a2 in A:
         for p in a2.precond:
-            formula.addClause([-a2v[a2]] + [s2v[(a1,p,a2)] for a1 in filter(lambda x: x is not a2, adders[p])])
+            formula.addClause([-a2v[a2]] + [s2v[(a1,p,a2)] for a1 in [x for x in adders[p] if x is not a2]])
 
     # Create unthreatened support
     for a2 in A:
         for p in a2.precond:
-            for a1 in filter(lambda x: x is not a2, adders[p]):
+            for a1 in [x for x in adders[p] if x is not a2]:
 
                 # Support implies ordering
                 formula.addClause([-s2v[(a1,p,a2)], o2v[(a1,a2)]])
 
                 # Forbid threats
                 #print "%s--%s-->%s: %s" % (str(a1), str(p), str(a2), str(deleters[p]))
-                for ad in filter(lambda x: x not in set([a1,a2]), deleters[p]):
+                for ad in [x for x in deleters[p] if x not in set([a1,a2])]:
                     #print "...%s--%s-->%s: %s" % (str(a1), str(p), str(a2), str(ad))
                     formula.addClause([-s2v[(a1,p,a2)], -a2v[ad], o2v[(ad,a1)], o2v[(a2,ad)]])
 
@@ -194,28 +194,28 @@ def encode_POP(dom, prob, pop, output, flags):
         mapping_lines.append("%d %s supports %s with %s" % (v, str(v2s[v][0]), str(v2s[v][2]), str(v2s[v][1])))
     write_file(output+'.map', mapping_lines)
 
-    print ''
-    print "Vars: %d" % formula.num_vars
-    print "Clauses: %d" % formula.num_clauses
-    print "Soft: %d" % len(formula.getSoftClauses())
-    print "Hard: %d" % len(formula.getHardClauses())
-    print "Max Weight: %d" % formula.top_weight
-    print ''
+    print('')
+    print("Vars: %d" % formula.num_vars)
+    print("Clauses: %d" % formula.num_clauses)
+    print("Soft: %d" % len(formula.getSoftClauses()))
+    print("Hard: %d" % len(formula.getHardClauses()))
+    print("Max Weight: %d" % formula.top_weight)
+    print('')
 
 if __name__ == '__main__':
     import os
     myargs, flags = get_opts()
 
-    if not myargs.has_key('-domain'):
-        print "Must include domain to lift:"
-        print USAGE_STRING
+    if '-domain' not in myargs:
+        print("Must include domain to lift:")
+        print(USAGE_STRING)
         os._exit(1)
 
     dom = myargs['-domain']
 
-    if not myargs.has_key('-prob'):
-        print "Must include problem to lift:"
-        print USAGE_STRING
+    if '-prob' not in myargs:
+        print("Must include problem to lift:")
+        print(USAGE_STRING)
         os._exit(1)
 
     prob = myargs['-prob']
@@ -238,9 +238,9 @@ if __name__ == '__main__':
         assert False, "Error: No recognized planner specified."
 
 
-    if not myargs.has_key('-output'):
-        print "Must include output CNF file:"
-        print USAGE_STRING
+    if '-output' not in myargs:
+        print("Must include output CNF file:")
+        print(USAGE_STRING)
         os._exit(1)
 
     output = myargs['-output']

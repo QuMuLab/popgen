@@ -67,11 +67,11 @@ def filter_solved_domains(domain, dom_probs, solver=ALL):
 
 def solved_stats(domain):
     dom_probs = DOMAINS[domain]
-    print ','.join(map(str, [domain,
+    print(','.join(map(str, [domain,
                              len(dom_probs),
                              len(filter_solved_domains(domain, dom_probs, MERCURY)),
                              len(filter_solved_domains(domain, dom_probs, MP)),
-                             len(filter_solved_domains(domain, dom_probs, POPF))]))
+                             len(filter_solved_domains(domain, dom_probs, POPF))])))
 
 
 def popf_flex(domain):
@@ -102,9 +102,9 @@ def popf_flex(domain):
             append_file('popf-flex.csv', "\n%s,%s,%s,E,E,E" % (domain, d, p))
 
     if count == 0:
-        print '{:20s}'.format(domain) + " - / -"
+        print('{:20s}'.format(domain) + " - / -")
     else:
-        print '{:20s}'.format(domain) + " %f / %f" % ((total[0] ** (1.0 / float(count))), (total[1] / float(count)))
+        print('{:20s}'.format(domain) + " %f / %f" % ((total[0] ** (1.0 / float(count))), (total[1] / float(count))))
 
 def merc_flex(domain):
 
@@ -134,9 +134,9 @@ def merc_flex(domain):
             append_file('merc-flex.csv', "\n%s,%s,%s,E,E,E" % (domain, d, p))
 
     if count == 0:
-        print '{:20s}'.format(domain) + " - / -"
+        print('{:20s}'.format(domain) + " - / -")
     else:
-        print '{:20s}'.format(domain) + " %f / %f" % ((total[0] ** (1.0 / float(count))), (total[1] / float(count)))
+        print('{:20s}'.format(domain) + " %f / %f" % ((total[0] ** (1.0 / float(count))), (total[1] / float(count))))
 
 def mp_flex(domain):
 
@@ -166,9 +166,9 @@ def mp_flex(domain):
             append_file('mp-flex.csv', "\n%s,%s,%s,E,E,E" % (domain, d, p))
 
     if count == 0:
-        print '{:20s}'.format(domain) + " - / -"
+        print('{:20s}'.format(domain) + " - / -")
     else:
-        print '{:20s}'.format(domain) + " %f / %f" % ((total[0] ** (1.0 / float(count))), (total[1] / float(count)))
+        print('{:20s}'.format(domain) + " %f / %f" % ((total[0] ** (1.0 / float(count))), (total[1] / float(count))))
 
 
 
@@ -199,8 +199,8 @@ def do_mercury(domain):
         elif match_value(result.error_file, 'bad_alloc'):
             memouts += 1
 
-    print "\nTimed out %d times." % timeouts
-    print "Ran out of memory %d times.\n" % memouts
+    print("\nTimed out %d times." % timeouts)
+    print("Ran out of memory %d times.\n" % memouts)
 
 def do_mp(domain):
     dom_probs = DOMAINS[domain]
@@ -228,8 +228,8 @@ def do_mp(domain):
         elif match_value(result.error_file, 'bad_alloc'):
             memouts += 1
 
-    print "\nTimed out %d times." % timeouts
-    print "Ran out of memory %d times.\n" % memouts
+    print("\nTimed out %d times." % timeouts)
+    print("Ran out of memory %d times.\n" % memouts)
 
 def do_ff(domain):
 
@@ -259,8 +259,8 @@ def do_ff(domain):
         else:
             os.system("mv %s %s/%s.ff" % (result.output_file, domain, result.single_args['domprob'].split(' ')[-1].split('/')[-1].split('.pddl')[0]))
 
-    print "\nTimed out %d times." % timeouts
-    print "Ran out of memory %d times.\n" % memouts
+    print("\nTimed out %d times." % timeouts)
+    print("Ran out of memory %d times.\n" % memouts)
 
 
 def do_popf(domain):
@@ -293,18 +293,18 @@ def do_popf(domain):
         elif match_value(result.error_file, 'bad_alloc'):
             memouts += 1
 
-    print "\nTimed out %d times." % timeouts
-    print "Ran out of memory %d times.\n" % memouts
+    print("\nTimed out %d times." % timeouts)
+    print("Ran out of memory %d times.\n" % memouts)
 
 
 def do_encode(domain, solver, disable_linears = False):
 
     if ALL == solver:
-        print "Error: Cannot encode both solvers at once (do them separately)"
+        print("Error: Cannot encode both solvers at once (do them separately)")
         return
 
     if domain in FORBIDDEN_DOMAINS:
-        print "Skipping forbidden domain %s" % domain
+        print("Skipping forbidden domain %s" % domain)
         return
 
     dom_probs = filter_solved_domains(domain, DOMAINS[domain], solver)
@@ -332,11 +332,11 @@ def do_encode(domain, solver, disable_linears = False):
             for allact in ['ALLACT']:
                 for deorder in ['', 'DEORDER']:
 
-                    print "\nDomain: %s" % dom
-                    print "Problem: %s" % prob
+                    print("\nDomain: %s" % dom)
+                    print("Problem: %s" % prob)
                     #print "Serial: %s" % str(serial == 'SERIAL')
                     #print "All Act.: %s" % str(allact == 'ALLACT')
-                    print "Deorder: %s" % str(deorder == 'DEORDER')
+                    print("Deorder: %s" % str(deorder == 'DEORDER'))
 
                     prev_time = time.time()
                     prob_name = prob.split('/')[-1].split('.pddl')[0]
@@ -456,7 +456,7 @@ def do_encode(domain, solver, disable_linears = False):
         res_dir += "encoded-mp-%s" % domain
     else:
         res_dir += "encoded-unknown-%s" % domain
-        print "Warning: Unknown solver, %s" % str(solver)
+        print("Warning: Unknown solver, %s" % str(solver))
 
     os.system("mkdir %s" % res_dir)
     os.system("mv encoded.* %s" % res_dir)
@@ -470,7 +470,7 @@ def do_encode(domain, solver, disable_linears = False):
 def do_mip(domain):
 
     if domain in FORBIDDEN_DOMAINS:
-        print "Skipping forbidden domain %s" % domain
+        print("Skipping forbidden domain %s" % domain)
         return
 
     ID = "mip_%s" % (domain)
@@ -487,8 +487,8 @@ def do_mip(domain):
 
     for dom,prob in dom_probs:
 
-        print "\nDomain: %s" % dom
-        print "Problem: %s" % prob
+        print("\nDomain: %s" % dom)
+        print("Problem: %s" % prob)
 
         prob_name = prob.split('/')[-1].split('.pddl')[0]
 
@@ -537,8 +537,8 @@ if __name__ == '__main__':
     myargs, flags = get_opts()
 
     if '-domain' not in myargs:
-        print "Error: Must choose a domain:"
-        print USAGE_STRING
+        print("Error: Must choose a domain:")
+        print(USAGE_STRING)
         os._exit(1)
 
     solver = ALL
@@ -560,7 +560,7 @@ if __name__ == '__main__':
         else:
             doms = [myargs['-domain']]
 
-        print "Domain,Problems,Merc,MP,POPF"
+        print("Domain,Problems,Merc,MP,POPF")
 
         for dom in doms:
             solved_stats(dom)
@@ -572,14 +572,14 @@ if __name__ == '__main__':
             doms = [myargs['-domain']]
 
         for dom in doms:
-            print "\n\n -{ %s }-\n" % dom
-            print "Running MP"
+            print("\n\n -{ %s }-\n" % dom)
+            print("Running MP")
             do_mp(dom)
 
-            print "Running POPF"
+            print("Running POPF")
             do_popf(dom)
 
-            print "Running Mercury"
+            print("Running Mercury")
             do_mercury(dom)
 
             os.system("mv %s PLANS" % dom)
@@ -597,7 +597,7 @@ if __name__ == '__main__':
         do_mercury(myargs['-domain'])
 
     if 'merc-flex' in flags:
-        print "\nComputing the Mercury Relaxer Flex..."
+        print("\nComputing the Mercury Relaxer Flex...")
         write_file('merc-flex.csv', 'Domain,DFile,PFile,Acts,Orders,Flex')
         if 'all' == myargs['-domain'].lower():
             for d in GOOD_DOMAINS:
@@ -606,7 +606,7 @@ if __name__ == '__main__':
             merc_flex(myargs['-domain'])
 
     if 'popf-flex' in flags:
-        print "\nComputing the POPF Flex..."
+        print("\nComputing the POPF Flex...")
         write_file('popf-flex.csv', 'Domain,DFile,PFile,Acts,Orders,Flex')
         if 'all' == myargs['-domain'].lower():
             for d in GOOD_DOMAINS:
@@ -615,7 +615,7 @@ if __name__ == '__main__':
             popf_flex(myargs['-domain'])
 
     if 'mp-flex' in flags:
-        print "\nComputing the MP Flex..."
+        print("\nComputing the MP Flex...")
         write_file('mp-flex.csv', 'Domain,DFile,PFile,Acts,Orders,Flex')
         if 'all' == myargs['-domain'].lower():
             for d in GOOD_DOMAINS:

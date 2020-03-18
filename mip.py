@@ -135,7 +135,7 @@ def encode_POP_v1(dom, prob, pop, flags, popfile):
         counter = 1
         for f in F:
             for a2 in sup_var_mapping[f]:
-                m.addConstr(quicksum(sup_var_mapping[f][a2].values()) == 1, "sup_%d" % counter)
+                m.addConstr(quicksum(list(sup_var_mapping[f][a2].values())) == 1, "sup_%d" % counter)
                 counter += 1
 
         # Causal-link protection
@@ -205,16 +205,16 @@ def encode_POP_v1(dom, prob, pop, flags, popfile):
         #for v in m.getVars():
         #    print v.varName, v.x
 
-        print '\nObj:', m.objVal
+        print('\nObj:', m.objVal)
 
         times.append(time.time())
 
-        print "Encoding Time: %f" % (times[1] - times[0])
-        print "Solving Time: %f\n" % (times[2] - times[1])
+        print("Encoding Time: %f" % (times[1] - times[0]))
+        print("Solving Time: %f\n" % (times[2] - times[1]))
 
     except GurobiError as e:
-        print 'Error reported:',
-        print e
+        print('Error reported:', end=' ')
+        print(e)
 
 
 def encode_POP_v2(dom, prob, pop, flags, popfile):
@@ -286,11 +286,11 @@ def encode_POP_v2(dom, prob, pop, flags, popfile):
     # Integrate new variables
     m.update()
 
-    order_count = 1 + len(o2v.keys())
+    order_count = 1 + len(list(o2v.keys()))
 
     # Set objective
     # Use the first if only optimizing for the number of ordering constraints
-    m.setObjective(quicksum(v2o.keys()), GRB.MINIMIZE)
+    m.setObjective(quicksum(list(v2o.keys())), GRB.MINIMIZE)
     #m.setObjective(quicksum(v2o.keys() + [order_count * var for var in v2a.keys()]), GRB.MINIMIZE)
 
 
@@ -340,7 +340,7 @@ def encode_POP_v2(dom, prob, pop, flags, popfile):
     # Satisfy all the preconditions
     for a2 in A:
         for p in a2.precond:
-            m.addConstr((1 - a2v[a2]) + quicksum([s2v[(a1,p,a2)] for a1 in filter(lambda x: x is not a2, adders[p])]) >= 1)
+            m.addConstr((1 - a2v[a2]) + quicksum([s2v[(a1,p,a2)] for a1 in [x for x in adders[p] if x is not a2]]) >= 1)
 
     # Create unthreatened support
     for a2 in A:
@@ -350,14 +350,14 @@ def encode_POP_v2(dom, prob, pop, flags, popfile):
             if (a2, p, a2) in s2v:
                 m.addConstr(s2v[(a2, p, a2)] == 0)
 
-            for a1 in filter(lambda x: x is not a2, adders[p]):
+            for a1 in [x for x in adders[p] if x is not a2]:
 
                 # Support implies ordering
                 m.addConstr((1 - s2v[(a1,p,a2)]) + o2v[(a1,a2)] >= 1)
 
                 # Forbid threats
                 #print "\n%s--%s-->%s: %s" % (str(a1), str(p), str(a2), str(deleters[p]))
-                for ad in filter(lambda x: x not in set([a1,a2]), deleters[p]):
+                for ad in [x for x in deleters[p] if x not in set([a1,a2])]:
                     #print "...%s--%s-->%s: %s" % (str(a1), str(p), str(a2), str(ad))
                     m.addConstr((1 - s2v[(a1,p,a2)]) + (1 - a2v[ad]) + o2v[(ad,a1)] + o2v[(a2,ad)] >= 1)
 
@@ -371,25 +371,25 @@ def encode_POP_v2(dom, prob, pop, flags, popfile):
     #for v in m.getVars():
     #    print v.varName, v.x
 
-    print '\nObj:', m.objVal
-    print "Actions: %d / %d" % (sum([int(v.x) for v in v2a.keys()]), len(A))
-    print 'Orderings:', sum([int(v.x) for v in v2o.keys()])
+    print('\nObj:', m.objVal)
+    print("Actions: %d / %d" % (sum([int(v.x) for v in list(v2a.keys())]), len(A)))
+    print('Orderings:', sum([int(v.x) for v in list(v2o.keys())]))
 
     times.append(time.time())
 
-    print "Encoding Time: %f" % (times[1] - times[0])
-    print "Solving Time: %f\n" % (times[2] - times[1])
+    print("Encoding Time: %f" % (times[1] - times[0]))
+    print("Solving Time: %f\n" % (times[2] - times[1]))
 
     if popfile:
         p = POP()
         for act in A:
             p.add_action(act)
 
-        for v in v2s.keys():
+        for v in list(v2s.keys()):
             if 1 == int(v.x):
                 p.link_actions(v2s[v][0], v2s[v][2], str(v2s[v][1]))
 
-        for v in v2o.keys():
+        for v in list(v2o.keys()):
             if 1 == int(v.x):
                 p.link_actions(v2o[v][0], v2o[v][1], '')
 
@@ -419,26 +419,26 @@ if __name__ == '__main__':
     import os
     myargs, flags = get_opts()
 
-    if not myargs.has_key('-domain'):
-        print "Must include domain to lift:"
-        print USAGE_STRING
+    if '-domain' not in myargs:
+        print("Must include domain to lift:")
+        print(USAGE_STRING)
         os._exit(1)
 
     dom = myargs['-domain']
 
-    if not myargs.has_key('-prob'):
-        print "Must include problem to lift:"
-        print USAGE_STRING
+    if '-prob' not in myargs:
+        print("Must include problem to lift:")
+        print(USAGE_STRING)
         os._exit(1)
 
     prob = myargs['-prob']
 
-    if not myargs.has_key('-ffout') and not myargs.has_key('-mercout'):
-        print "Must include FF or Mercury output to parse:"
-        print USAGE_STRING
+    if '-ffout' not in myargs and '-mercout' not in myargs:
+        print("Must include FF or Mercury output to parse:")
+        print(USAGE_STRING)
         os._exit(1)
 
-    if not myargs.has_key('-version'):
+    if '-version' not in myargs:
         encode_POP = encode_POP_v2
     elif '1' == myargs['-version']:
         encode_POP = encode_POP_v1
@@ -446,7 +446,7 @@ if __name__ == '__main__':
         encode_POP = encode_POP_v2
 
     popfile = ''
-    if myargs.has_key('-popfile'):
+    if '-popfile' in myargs:
         popfile = myargs['-popfile']
 
     if '-ffout' in myargs:

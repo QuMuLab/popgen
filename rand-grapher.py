@@ -20,7 +20,7 @@ def doit(nActs, nFlex, nTrials):
     write_file(fn, 'Flex,LinFlex\n')
 
     for flex in [step * i for i in range(1,nFlex+1)]:
-        print "\nWorking on flex %f" % flex
+        print("\nWorking on flex %f" % flex)
         for _ in range(nTrials):
             p = POP()
             for a in acts:
@@ -36,17 +36,17 @@ def doit(nActs, nFlex, nTrials):
             # Compute the stats
             f = p.flex
             lf = compute_linflex(p)
-            print "%f / %f" % (f, lf)
+            print("%f / %f" % (f, lf))
             append_file(fn, "%.20f,%.20f\n" % (f, lf))
-        print
+        print()
 
 
 if __name__ == '__main__':
     import sys
 
     if len(sys.argv) != 4:
-        print
-        print "Usage: python rand-grapher.py <num actions> <num flex amounts> <num trials>"
-        print
+        print()
+        print("Usage: python rand-grapher.py <num actions> <num flex amounts> <num trials>")
+        print()
     else:
         doit(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))

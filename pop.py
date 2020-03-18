@@ -96,7 +96,7 @@ class POP(object):
         self.network.remove_node(a)
 
     def get_links(self):
-        return self.link_reasons.keys()
+        return list(self.link_reasons.keys())
 
     def analyze_independence(self):
 
