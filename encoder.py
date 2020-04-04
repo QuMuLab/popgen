@@ -132,7 +132,7 @@ def encode_POP(dom, prob, pop, output, flags):
                 formula.addClause([Not(('goal', p))] + [(a1,p,a2) for a1 in adders[p]])
         else:
             for p in a2.precond:
-            formula.addClause([-a2v[a2]] + [s2v[(a1,p,a2)] for a1 in [x for x in adders[p] if x is not a2]])
+                formula.addClause([-a2v[a2]] + [s2v[(a1,p,a2)] for a1 in [x for x in adders[p] if x is not a2]])
 
     # Create unthreatened support
     for a2 in A:
