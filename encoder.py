@@ -24,6 +24,7 @@ Usage: python encoder.py -<option> <argument> -<option> <argument> ... <FLAG> <F
           SERIAL: Force it to be serial.\n\
           ALLACT: Include all actions.\n\
           DEORDER: Only allow deorderings.\n\
+          RELAXGOAL: Create plans for _any_ goal.\n\
         "
 
 
@@ -45,6 +46,10 @@ def encode_POP(dom, prob, pop, output, flags):
     adders = {}
     deleters = {}
 
+    init.adds = F
+    if 'RELAXGOAL' in flags:
+        goal.pre = F
+
     for f in F:
         adders[f] = set([])
         deleters[f] = set([])
@@ -57,6 +62,13 @@ def encode_POP(dom, prob, pop, output, flags):
 
     VARNUM = 1
 
+    priority = []
+    for f in F:
+        formula.addVariable(Var(('init',f)))
+        priority.append(('init', f))
+        if 'RELAXGOAL' in flags:
+            formula.addVariable(Var(('goal',f)))
+            priority.append(('goal',f))
     # Create the vars for each action
     v2a = {}
     a2v = {}
@@ -115,7 +127,11 @@ def encode_POP(dom, prob, pop, output, flags):
 
     # Satisfy all the preconditions
     for a2 in A:
-        for p in a2.precond:
+        if a2 == goal and 'RELAXGOAL' in flags:
+            for p in F:
+                formula.addClause([Not(('goal', p))] + [(a1,p,a2) for a1 in adders[p]])
+        else:
+            for p in a2.precond:
             formula.addClause([-a2v[a2]] + [s2v[(a1,p,a2)] for a1 in [x for x in adders[p] if x is not a2]])
 
     # Create unthreatened support
