@@ -2,6 +2,8 @@
 
 Methods for deordering and reordering partial order plans.
 
+## Disclaimer
+This code is from half-a-decade ago, and is in need of some serious updating. This will likely come in the form of a rewrite using libraries such as [[bauhaus](https://github.com/qumulab/bauhaus)], but until that time please be aware that things may no longer be working with modern libraries.
 
 ## Usage
 Coming soon.
