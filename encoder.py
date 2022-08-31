@@ -16,26 +16,7 @@ from lifter import lift_POP, make_layered_POP
 
 
 
-USAGE_STRING = "\n\
-Usage: python encoder.py -<option> <argument> -<option> <argument> ... <FLAG> <FLAG> ...\n\n\
-\n\
-        Where options are:\n\
-          -domain <pddl domain file>\n\
-          -prob <pddl problem file>\n\
-          -ffout <captured FF output>\n\
-          -popfout <captured POPF output>\n\
-          -mercout <captured Mercury output>\n\
-          -mpout <captured Mp output>\n\
-          -output <output file basename>\n\
-\n\
-        And the flags include:\n\
-          SERIAL: Force it to be serial.\n\
-          ALLACT: Include all actions.\n\
-          DEORDER: Only allow deorderings.\n\
-        "
-
-
-def encode_POP(dom, prob, pop, output, flags):
+def encode_POP(pop, cmdargs):
 
     # For sanitization, make sure we close the pop
     pop.transativly_close()
@@ -211,47 +192,29 @@ def encode_POP(dom, prob, pop, output, flags):
     print('')
 
 if __name__ == '__main__':
-    import os
-    myargs, flags = get_opts()
 
-    if '-domain' not in myargs:
-        print("Must include domain to lift:")
-        print(USAGE_STRING)
-        os._exit(1)
+    parser = argparse.ArgumentParser(description='Generate a wcnf file for a planning problem.')
 
-    dom = myargs['-domain']
+    # --domain
+    parser.add_argument('-d', '--domain', dest='domain', help='Domain file', required=True)
 
-    if '-prob' not in myargs:
-        print("Must include problem to lift:")
-        print(USAGE_STRING)
-        os._exit(1)
+    # --problem
+    parser.add_argument('-p', '--problem', dest='problem', help='Problem file', required=True)
 
-    prob = myargs['-prob']
+    # --plan
+    parser.add_argument('-s', '--plan', dest='plan', help='Plan file', required=True)
 
-    if '-ffout' in myargs:
-        plan = parse_output_FF(myargs['-ffout'])
-        pop = lift_POP(dom, prob, plan, True)
-    elif '-mercout' in myargs:
-        plan = parse_output_ipc(myargs['-mercout'])
-        pop = lift_POP(dom, prob, plan, True)
-    elif '-popfout' in myargs:
-        popfout = myargs['-popfout']
-        layered_plan = parse_output_popf(popfout)
-        pop = make_layered_POP(layered_plan, dom, prob, popfout)
-    elif '-mpout' in myargs:
-        mpout = myargs['-mpout']
-        layered_plan = parse_output_mp(mpout)
-        pop = make_layered_POP(layered_plan, dom, prob, mpout)
-    else:
-        assert False, "Error: No recognized planner specified."
+    # --output
+    parser.add_argument('-o', '--output', dest='output', help='Output file', required=True)
 
+    # --allact flag
+    parser.add_argument('--allact', dest='allact', action='store_true', help='Include all actions in the plan')
+    # --serial flag
+    parser.add_argument('--serial', dest='serial', action='store_true', help='Force it to be serial')
+    # --deorder flag
+    parser.add_argument('--deorder', dest='deorder', action='store_true', help='Force it to be a deordering')
 
-    if '-output' not in myargs:
-        print("Must include output CNF file:")
-        print(USAGE_STRING)
-        os._exit(1)
+    args = parser.parse_args()
+    pop = lift_POP(args.domain, args.problem, args.plan, True)
 
-    output = myargs['-output']
-
-    encode_POP(dom, prob, pop, output, flags)
-
+    encode_POP(pop, args)
