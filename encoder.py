@@ -1,14 +1,10 @@
 
-from krrt.planning.strips.representation import parse_problem, generate_action, Action
-from krrt.planning import parse_output_FF, parse_output_popf, parse_output_ipc, parse_output_mp
-# from krrt.sat.CNF import OptimizedLevelWeightedFormula
-
 import argparse
 from bauhaus import Encoding, proposition, constraint
 
 from lifter import lift_POP, make_layered_POP
 
-
+import tarskilite as tl
 
 
 def encode_POP(pop, cmdargs):
