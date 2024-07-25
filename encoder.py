@@ -12,7 +12,12 @@ def encode_POP(pop, cmdargs):
     # For sanitization, make sure we close the pop
     pop.transativly_close()
 
-    allF, allA, I, G = parse_problem(dom, prob)
+    prob = tl.STRIPS(cmdargs.domain, cmdargs.problem)
+    allF = prob.fluents
+    allA = prob.actions
+    I = prob.init
+    G = prob.goal
+
 
     F = pop.F
     A = pop.A
@@ -186,23 +191,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Generate a wcnf file for a planning problem.')
 
-    # --domain
     parser.add_argument('-d', '--domain', dest='domain', help='Domain file', required=True)
 
-    # --problem
     parser.add_argument('-p', '--problem', dest='problem', help='Problem file', required=True)
 
-    # --plan
     parser.add_argument('-s', '--plan', dest='plan', help='Plan file', required=True)
 
-    # --output
     parser.add_argument('-o', '--output', dest='output', help='Output file', required=True)
 
-    # --allact flag
     parser.add_argument('--allact', dest='allact', action='store_true', help='Include all actions in the plan')
-    # --serial flag
     parser.add_argument('--serial', dest='serial', action='store_true', help='Force it to be serial')
-    # --deorder flag
     parser.add_argument('--deorder', dest='deorder', action='store_true', help='Force it to be a deordering')
 
     args = parser.parse_args()

@@ -1,34 +1,27 @@
 
-from krrt.utils import get_opts
-from krrt.planning.strips.representation import parse_problem, generate_action, Action
-from krrt.planning import parse_output_FF, parse_output_popf, parse_output_ipc, parse_output_mp
+# from krrt.utils import get_opts
+# from krrt.planning.strips.representation import parse_problem, generate_action, Action
+# from krrt.planning import parse_output_FF, parse_output_popf, parse_output_ipc, parse_output_mp
+
+
+import argparse
+import networkx as nx
+
+import tarskilite as tl
+
 
 from pop import POP
 from linearizer import count_linearizations
 
-import networkx as nx
-
-USAGE_STRING = "\n\
-Usage: python lifter.py -<option> <argument> -<option> <argument> ... <FLAG> <FLAG> ...\n\n\
-\n\
-        Where options are:\n\
-          -domain <pddl domain file>\n\
-          -prob <pddl problem file>\n\
-          -ffout <captured FF output>\n\
-          -popfout <captured POPF output>\n\
-          -mercout <captured Mercury output>\n\
-          -mpout <captured MP output>\n\
-\n\
-        And the flags include:\n\
-          STATS (just print the pop stats)\n\
-          DOT (print the expressive dot format)\n\
-          SMALLDOT (print the concise dot format)\n\
-          COUNT (print the number of linearizations)\n\
-        "
 
 def make_layered_POP(layered_plan, domain = 'domain.pddl', problem = 'prob.pddl', popfout = 'POPF.out'):
+    raise NotImplementedError("Modern Layered POP not implemented yet")
 
-    allF, allA, I, G = parse_problem(domain, problem)
+    prob = tl.STRIPS(domain, problem)
+    allF = prob.fluents
+    allA = prob.actions
+    I = prob.init
+    G = prob.goal
 
     pop = POP()
     F = set([])
@@ -95,9 +88,18 @@ def make_layered_POP(layered_plan, domain = 'domain.pddl', problem = 'prob.pddl'
 
     return pop
 
-def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, serialized = False):
+def lift_POP(domain, problem, pfile, serialized = False):
 
-    allF, allA, I, G = parse_problem(domain, problem)
+    prob = tl.STRIPS(domain, problem)
+    allF = prob.fluents
+    allA = {str(a): a for a in prob.actions}
+    I = prob.init
+    G = prob.goal
+
+    # parse the plan file
+    with open(pfile, 'r') as f:
+        lines = [l.strip() for l in f.readlines()]
+        plan = [l for l in lines if l.startswith('(')]
 
     pop = POP()
 
@@ -111,7 +113,7 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
     index = 1
 
     # Init action
-    init = Action(set([]), I, set([]), "init")
+    init = tl.Action("init", set(), I, set())
     pop.add_action(init)
     F |= init.adds
     A.add(init)
@@ -119,15 +121,14 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
     reverse_indices[0] = init
 
     # Normal actions
-    for act in plan.actions:
-        #a = generate_action(allA[act.operator], act)
-        a = allA[str(act)[1:-1]].copy()
+    for act in plan:
+        orig_act = allA[act[1:-1]]
+        a = tl.Action(orig_act.name, orig_act.pres, orig_act.adds, orig_act.dels)
         pop.add_action(a)
-        F |= a.adds | a.precond | a.dels
+        F |= a.adds | a.pres | a.dels
 
-        act_name = str(a)
-        if act_name in action_names:
-            a.operator = a.operator + ("-%d" % a_index)
+        if act in action_names:
+            a.name = a.name + ("-%d" % a_index)
             a_index += 1
 
         assert a not in A
@@ -139,9 +140,9 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
         action_names.add(str(a))
 
     # Goal action
-    goal = Action(G, set([]), set([]), "goal")
+    goal = tl.Action("goal", G, set(), set())
     pop.add_action(goal)
-    F |= goal.precond
+    F |= goal.pres
     A.add(goal)
     indices[goal] = index
     reverse_indices[index] = goal
@@ -176,7 +177,7 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
             deleters[f].add(a)
 
     for act in A:
-        for p in act.precond:
+        for p in act.pres:
             # Find the earliest adder of p that isn't threatened
             dels_before = set([x for x in deleters[p] if indices[x] < indices[act]])
             dels_after = (deleters[p] - dels_before) - set([act])
@@ -193,13 +194,13 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
             earliest_adder = None
 
             for adder in adders[p]:
-                if indices[adder] > latest_deleter and indices[adder] < indices[earliest_adder]:
+                if indices[adder] >= latest_deleter and indices[adder] < indices[earliest_adder]:
                     earliest_adder = adder
 
             err_info = "\n\nDom:  %s\nProb: %s\nProp: %s" % (domain, problem, str(p))
             assert earliest_adder is not None, err_info
             assert indices[earliest_adder] < indices[act], "%s\n\n%s\n%s\n\n" % (err_info, str(earliest_adder), str(act))
-            assert latest_deleter < indices[earliest_adder], err_info
+            assert latest_deleter <= indices[earliest_adder], err_info
 
             # We now have an unthreatened adder of fluent p for action act
             #  - Add the causal link
@@ -208,14 +209,15 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
             #  - Forbid the threatening actions
             for deleter in dels_before:
                 #pop.link_actions(deleter, earliest_adder, (earliest_adder, act, p))
-                pop.link_actions(deleter, earliest_adder, "! %s" % str(p))
+                if deleter != earliest_adder:
+                    pop.link_actions(deleter, earliest_adder, "! %s" % str(p))
 
             for deleter in dels_after:
                 #pop.link_actions(act, deleter, (adder, act, p))
                 pop.link_actions(act, deleter, "! %s" % str(p))
 
     # Ensure an ordering of all actions after the initial state, and before the goal state
-    shortest_paths = nx.all_pairs_shortest_path_length(pop.network)
+    shortest_paths = dict(nx.all_pairs_shortest_path_length(pop.network))
     for act in A:
 
         if act not in shortest_paths[init]:
@@ -231,47 +233,24 @@ def lift_POP(domain = 'domain.pddl', problem = 'prob.pddl', plan = None, seriali
 
 
 if __name__ == '__main__':
-    import os
-    myargs, flags = get_opts()
+    parser = argparse.ArgumentParser(description='Lift a plan to a POP')
+    parser.add_argument('--domain', type=str, help='PDDL domain file', required=True)
+    parser.add_argument('--problem', type=str, help='PDDL problem file', required=True)
+    parser.add_argument('--plan', type=str, help='Classical plan file', required=True)
+    parser.add_argument('--stats', action='store_true', help='Print POP stats')
+    parser.add_argument('--dot', action='store_true', help='Print the expressive dot format')
+    parser.add_argument('--smalldot', action='store_true', help='Print the concise dot format')
+    parser.add_argument('--count', action='store_true', help='Print the number of linearizations')
+    args = parser.parse_args()
 
-    if '-domain' not in myargs:
-        print("Must include domain to lift:")
-        print(USAGE_STRING)
-        os._exit(1)
+    pop = lift_POP(args.domain, args.problem, args.plan)
 
-    dom = myargs['-domain']
-
-    if '-prob' not in myargs:
-        print("Must include problem to lift:")
-        print(USAGE_STRING)
-        os._exit(1)
-
-    prob = myargs['-prob']
-
-    if '-ffout' in myargs:
-        plan = parse_output_FF(myargs['-ffout'])
-        pop = lift_POP(dom, prob, plan)
-    elif '-mercout' in myargs:
-        plan = parse_output_ipc(myargs['-mercout'])
-        pop = lift_POP(dom, prob, plan)
-    elif '-popfout' in myargs:
-        popfout = myargs['-popfout']
-        layered_plan = parse_output_popf(popfout)
-        pop = make_layered_POP(layered_plan, dom, prob, popfout)
-    elif '-mpout' in myargs:
-        mpout = myargs['-mpout']
-        layered_plan = parse_output_mp(mpout)
-        pop = make_layered_POP(layered_plan, dom, prob, mpout)
-    else:
-        print("Must include FF, Mercury, MP, or POPF output to parse:")
-        print(USAGE_STRING)
-        os._exit(1)
-
-    if 'COUNT' in flags:
+    # if 'COUNT' in flags:
+    if args.count:
         print("\nLinearizations: %d\n" % count_linearizations(pop))
-    if 'STATS' in flags:
+    if args.stats:
         print("\n%s\n" % str(pop))
-    if 'DOT' in flags:
+    if args.dot:
         print(pop.dot())
-    if 'SMALLDOT' in flags:
+    if args.smalldot:
         print(pop.dot(True))
