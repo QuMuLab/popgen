@@ -2,7 +2,7 @@
 import argparse
 from bauhaus import Encoding, proposition, constraint
 
-from lifter import lift_POP, make_layered_POP
+from lifter import lift_POP
 
 import tarskilite as tl
 
@@ -63,7 +63,7 @@ def encode_POP(pop, cmdargs):
     v2s = {}
     s2v = {}
     for a2 in A:
-        for p in a2.precond:
+        for p in a2.pres:
             for a1 in adders[p]:
                 v2s[VARNUM] = (a1,p,a2)
                 s2v[(a1,p,a2)] = VARNUM
