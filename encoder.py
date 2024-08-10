@@ -1,6 +1,8 @@
 
-import argparse
+import argparse, json
+
 from bauhaus import Encoding, proposition, And, Or
+from nnf import dimacs
 
 from lifter import lift_POP
 
@@ -52,7 +54,7 @@ def encode_POP(pop, cmdargs):
             return f"Action({self.name})"
 
         def __str__(self):
-            return self.name
+            return str(self.name)
 
         def __hash__(self) -> int:
             return hash(self.name)
@@ -155,36 +157,46 @@ def encode_POP(pop, cmdargs):
         for (ai,aj) in pop.get_links():
             clauses.append(~Order(aj, ai))
 
-    F = And(clauses).compile().simplify()
-    assert False, "Made it!"
+    cnf = And(clauses).compile().simplify().to_CNF()
 
-    # TODO: Figure out how to get the soft unit clauses into the patrially weighted CNF
+    var_labels = dict(enumerate(cnf.vars(), start=1))
+    var_labels_inverse = {v: k for k, v in var_labels.items()}
+    cnf_dimacs = dimacs.dumps(cnf, mode='cnf', var_labels=var_labels_inverse).strip()
 
-    # Now add the soft clauses.
-    for a1 in A:
-        for a2 in A:
-            formula.addClause([-o2v[(a1,a2)]], 1, 1)
+    order_cost = 1
+    action_cost = len(orders) + 1
+    top_cost = (len(orders) * order_cost) + (len(actions) * action_cost) + 1
 
-        # formula.addClause([Not(a1)], COST, 2)
-        formula.addClause([-a2v[a1]], 1, 2)
+    cnflines = cnf_dimacs.split('\n')
 
-    formula.writeCNF(output+'.wcnf')
-    formula.writeCNF(output+'.cnf', hard=True)
-    mapping_lines = []
-    for v in v2a:
-        mapping_lines.append("%d %s in plan" % (v, str(v2a[v])))
-    for v in v2o:
-        mapping_lines.append("%d %s is ordered before %s" % (v, str(v2o[v][0]), str(v2o[v][1])))
-    for v in v2s:
-        mapping_lines.append("%d %s supports %s with %s" % (v, str(v2s[v][0]), str(v2s[v][2]), str(v2s[v][1])))
-    write_file(output+'.map', mapping_lines)
+    assert "p cnf" in cnflines[0]
+    (_, _, nv, nc) = cnflines[0].split()
+    cnflines[0] = f"p wcnf {nv} {int(nc)+len(actions)+len(orders)} {top_cost}"
+
+    for i in range(1, len(cnflines)):
+        if cnflines[i] != "":
+            cnflines[i] = f"{top_cost} {cnflines[i]}"
+
+    for a in actions:
+        v = var_labels_inverse[a]
+        cnflines.append(f"{action_cost} -{v} 0")
+
+    for o in orders:
+        v = var_labels_inverse[o]
+        cnflines.append(f"{order_cost} -{v} 0")
+
+    with open(cmdargs.output, 'w') as f:
+        f.write('\n'.join(cnflines))
+
+    with open(cmdargs.output+'.map', 'w') as f:
+        f.write(json.dumps({k: str(v) for k, v in var_labels.items()}, indent=4))
 
     print('')
-    print("Vars: %d" % formula.num_vars)
-    print("Clauses: %d" % formula.num_clauses)
-    print("Soft: %d" % len(formula.getSoftClauses()))
-    print("Hard: %d" % len(formula.getHardClauses()))
-    print("Max Weight: %d" % formula.top_weight)
+    print(f"Vars: {nv}")
+    print(f"Clauses: {int(nc)+len(actions)+len(orders)}")
+    print(f"Soft: {len(actions)+len(orders)}")
+    print(f"Hard: {nc}")
+    print(f"Max Weight: {top_cost}")
     print('')
 
 if __name__ == '__main__':
