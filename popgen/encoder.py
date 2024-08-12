@@ -6,8 +6,6 @@ from nnf import dimacs
 
 from lifter import lift_POP
 
-import tarskilite as tl
-
 
 class Hashable:
     def __hash__(self):
@@ -95,7 +93,6 @@ def encode_POP(pop, cmdargs):
     o2v = {(order.a1, order.a2): order for order in orders}
 
     v2s = {support: (support.a1, support.p, support.a2) for support in supports}
-    # s2v = {(support.a1, support.p, support.a2): support for support in supports}
 
     clauses = []
 
@@ -216,6 +213,6 @@ if __name__ == '__main__':
     parser.add_argument('--deorder', dest='deorder', action='store_true', help='Force it to be a deordering')
 
     args = parser.parse_args()
-    pop = lift_POP(args.domain, args.problem, args.plan, True)
+    pop = lift_POP(args.domain, args.problem, args.plan, serialized=True)
 
     encode_POP(pop, args)

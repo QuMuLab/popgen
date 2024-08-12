@@ -5,9 +5,9 @@ from krrt.planning.strips.representation import parse_problem, generate_action, 
 from krrt.planning import parse_output_FF, parse_output_popf, parse_output_ipc
 from krrt.sat.CNF import OptimizedLevelWeightedFormula
 
-from linearizer import count_linearizations
+from popgen.linearizer import count_linearizations
 from lifter import lift_POP, make_layered_POP
-from pop import POP
+from popgen.pop import POP
 from gurobipy import *
 import time
 import networkx as nx

@@ -3,8 +3,8 @@ from krrt.planning.strips.representation import parse_problem, generate_action, 
 from krrt.planning import parse_output_FF, parse_output_popf
 from krrt.sat.CNF import Formula
 
-from linearizer import count_linearizations
-from pop import POP
+from popgen.linearizer import count_linearizations
+from popgen.pop import POP
 
 import networkx as nx
 

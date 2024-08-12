@@ -7,11 +7,11 @@
 import argparse
 import networkx as nx
 
-import tarskilite as tl
+import popgen.tarskilite as tl
 
 
-from pop import POP
-from linearizer import count_linearizations
+from popgen.pop import POP
+from popgen.linearizer import count_linearizations
 
 
 def make_layered_POP(layered_plan, domain = 'domain.pddl', problem = 'prob.pddl', popfout = 'POPF.out'):
