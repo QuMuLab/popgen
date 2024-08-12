@@ -1,12 +1,11 @@
-from krrt.utils import get_opts, write_file, read_file, get_lines, match_value
-from krrt.planning.strips.representation import parse_problem, generate_action, Action
-from krrt.planning import parse_output_FF, parse_output_popf
-from krrt.sat.CNF import Formula
 
-from popgen.linearizer import count_linearizations
-from popgen.pop import POP
+from linearizer import count_linearizations
+from pop import POP
 
-import networkx as nx
+
+# TODO: Rewrite for the modern era
+
+
 
 USAGE_STRING = """
 Usage: python analyzer.py -<option> <argument> -<option> <argument> ... <FLAG> <FLAG> ...

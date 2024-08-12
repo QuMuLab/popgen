@@ -6,10 +6,18 @@ Methods for deordering and reordering partial order plans.
 This code is from half-a-decade ago, and is in need of some serious updating. This will likely come in the form of a rewrite using libraries such as [[bauhaus](https://github.com/qumulab/bauhaus)], but until that time please be aware that things may no longer be working with modern libraries.
 
 ## Usage
-Coming soon.
+
+```bash
+# Encode a given problem+plan into a MaxSAT instance
+$ python popgen/encoder.py --domain d.pddl --problem p.pddl --plan p.plan --output out.wcnf
+
+# Solve the MaxSAT instance
+$ rc2.py -vv out.wcnf
+```
 
 ## Requirements
-Coming soon.
+- [pysat](https://pysathq.github.io/)
+- [bauhaus](https://bauhaus.readthedocs.io/)
 
 ## Citing This Work
 ```
