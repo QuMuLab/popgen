@@ -1,84 +1,47 @@
 
+import argparse, json
+
 from linearizer import count_linearizations
 from pop import POP
 
 
-# TODO: Rewrite for the modern era
-
-
-
-USAGE_STRING = """
-Usage: python analyzer.py -<option> <argument> -<option> <argument> ... <FLAG> <FLAG> ...
-
-        Where options are:
-          -map <map file>
-          -minimaxout <minimaxsat output>
-          -wcnf <wcnf file>
-          -popstats <minimaxsat output>
-
-        And the flags include:
-          NOCOUNT: When doing -popstats, don't enumerate/count the linearizations
-        """
-
 def get_mapping(map_file):
-    mapping = {}
-    lines = read_file(map_file)
-    for line in lines:
-        mapping[line.split(' ')[0]] = ' '.join(line.split(' ')[1:])
-        mapping['-'+line.split(' ')[0]] = 'NULL'
-        #mapping['-'+line.split(' ')[0]] = 'Not ' + ' '.join(line.split(' ')[1:])
+    with open(map_file) as f:
+        mapping = json.load(f)
     return mapping
 
-def do_minimaxout(mapping, output):
+def print_solution(mapping, output):
 
-    # sat4j
-    if match_value(output, 's OPTIMUM FOUND'):
-        data = get_lines(output, 's OPTIMUM FOUND', 'c objective.*')
-    else:
-        data = get_lines(output, 's UPPER BOUND', 'c objective.*')
+    with open(output) as f:
+        output = f.readlines()
 
-    values = data[1].strip().split(' ')[1:-1]
+    varline = [x for x in output if x.startswith('v ')][0]
+    values = varline.strip().split(' ')[1:]
 
-    # MaxHS
-    #data = get_lines(output, 's OPTIMUM FOUND', 'c Optimum.*')
-    #values = data[0].strip().split(' ')[1:]
-
-
+    print("\nSolution:")
     for v in values:
-        if mapping[v] != 'NULL':
-            print(mapping[v])
+        if '-' not in v:
+            print("  " + mapping[v])
 
-def do_wcnf(mapping, output):
-    data = get_lines(output, lower_bound='p .*')
-    for line in data:
-        print("Clause (%s):" % line.split(' ')[0])
-        for lit in line.strip().split(' ')[1:-1]:
-            if lit[0] == '-':
-                print("  Not (%s)" % mapping[lit[1:]])
-            else:
-                print("  %s" % mapping[lit])
 
-def do_popstats(mapping, output, disable_linears = False):
+def do_popstats(mapping, output, show_linears = False):
 
-    # sat4j
-    if match_value(output, 's OPTIMUM FOUND'):
-        data = get_lines(output, 's OPTIMUM FOUND', 'c objective.*')
-        optimal = True
-    else:
-        data = get_lines(output, 's UPPER BOUND', 'c objective.*')
-        optimal = False
+    with open(output) as f:
+        output = f.readlines()
 
-    # MaxHS
-    #data = get_lines(output, 's OPTIMUM FOUND', 'c Optimum.*')
-    #values = data[0].strip().split(' ')[1:]
+    varline = [x for x in output if x.startswith('v ')][0]
+    solline = [x for x in output if x.startswith('s ')][0]
 
-    try:
-        values = data[1].strip().split(' ')[1:-1]
-        #values = data[0].strip().split(' ')[1:]
-    except IndexError:
-        print(data)
-        print(data[1])
-        raise IndexError
+    optiml = ('OPTIMUM FOUND' in solline)
+    values = varline.strip().split(' ')[1:]
+
+
+
+
+    # TODO: Continue from here...
+
+
+
 
     actions = set()
     act_mapping = {}
@@ -120,7 +83,7 @@ def do_popstats(mapping, output, disable_linears = False):
     #            print a1
     #            print a2
 
-    if not disable_linears:
+    if show_linears:
         print("\nLinearizations: %d\n" % count_linearizations(pop))
 
     print("\n%s\n" % str(pop))
@@ -128,22 +91,21 @@ def do_popstats(mapping, output, disable_linears = False):
 
 
 if __name__ == '__main__':
-    import os
-    myargs, flags = get_opts()
 
-    if '-map' not in myargs:
-        print("Must include the map file:")
-        print(USAGE_STRING)
-        os._exit(1)
+    parser = argparse.ArgumentParser(description='Analyze the output of the solved encoding')
 
-    map_file = myargs['-map']
+    parser.add_argument('--map', help='The mapping file', required=True)
+    parser.add_argument('--rc2out', help='The output from RC2', required=True)
 
-    if '-minimaxout' in myargs:
-        do_minimaxout(get_mapping(map_file), myargs['-minimaxout'])
+    parser.add_argument('--print-solution', help='Print the solution', action='store_true')
+    parser.add_argument('--show-popstats', help='Show the POP stats', action='store_true')
+    parser.add_argument('--count-linearizations', help='Show the number of linearizations', action='store_true')
 
-    if '-wcnf' in myargs:
-        do_wcnf(get_mapping(map_file), myargs['-wcnf'])
+    args = parser.parse_args()
 
-    if '-popstats' in myargs:
-        do_popstats(get_mapping(map_file), myargs['-popstats'], ('NOCOUNT' in flags))
+    if args.print_solution:
+        print_solution(get_mapping(args.map), args.rc2out)
+
+    if args.show_popstats:
+        do_popstats(get_mapping(args.map), args.rc2out, args.count_linearizations)
 
