@@ -1,0 +1,4 @@
+bauhaus
+networkx
+python-sat
+tarski
