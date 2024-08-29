@@ -24,7 +24,7 @@ def print_solution(mapping, output):
             print("  " + mapping[v])
 
 
-def do_popstats(mapping, output, show_linears = False):
+def extract_pop(mapping, output):
 
     with open(output) as f:
         output = f.readlines()
@@ -70,6 +70,12 @@ def do_popstats(mapping, output, show_linears = False):
     #            print a1
     #            print a2
 
+    return pop, optimal
+
+def do_popstats(mapping, output, show_linears = False):
+
+    pop, optimal = extract_pop(mapping, output)
+
     if show_linears:
         print("\nLinearizations: %d\n" % count_linearizations(pop))
 
@@ -84,6 +90,9 @@ if __name__ == '__main__':
     parser.add_argument('--map', help='The mapping file', required=True)
     parser.add_argument('--rc2out', help='The output from RC2', required=True)
 
+    parser.add_argument('--dot', help='Print the POP as a dot file')
+    parser.add_argument('--compactdot', help='Print the POP as a compact dot file')
+
     parser.add_argument('--print-solution', help='Print the solution', action='store_true')
     parser.add_argument('--show-popstats', help='Show the POP stats', action='store_true')
     parser.add_argument('--count-linearizations', help='Show the number of linearizations', action='store_true')
@@ -95,4 +104,14 @@ if __name__ == '__main__':
 
     if args.show_popstats:
         do_popstats(get_mapping(args.map), args.rc2out, args.count_linearizations)
+
+    if args.dot:
+        pop, _ = extract_pop(get_mapping(args.map), args.rc2out)
+        with open(args.dot, 'w') as f:
+            f.write(pop.dot())
+
+    if args.compactdot:
+        pop, _ = extract_pop(get_mapping(args.map), args.rc2out)
+        with open(args.compactdot, 'w') as f:
+            f.write(pop.dot(compact=True))
 

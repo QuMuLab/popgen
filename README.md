@@ -16,7 +16,7 @@ $ python popgen/encoder.py --domain d.pddl --problem p.pddl --plan p.plan --outp
 $ rc2.py -vv out.wcnf > out.sol
 
 # Decode the solution back into a plan
-$ python popgen/analyzer.py --map out.wcnf.map --rc2out out.sol --print-solution --show-popstats --count-linearizations
+$ python popgen/analyzer.py --map out.wcnf.map --rc2out out.sol --print-solution --show-popstats --count-linearizations --dot plan.dot
 ```
 
 ## Requirements

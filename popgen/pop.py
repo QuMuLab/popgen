@@ -126,14 +126,14 @@ class POP(object):
 
         for i, node in enumerate(nodes):
             if compact:
-                if node.name == 'init':
+                if node == 'init':
                     dot_string += "    %d [label=\"I\"];\n" % i
-                elif node.name== 'goal':
+                elif node== 'goal':
                     dot_string += "    %d [label=\"G\"];\n" % i
                 else:
                     dot_string += "    %d;\n" % i
             else:
-                dot_string += "    %d [label=\"%s\"];\n" % (i, node.name)
+                dot_string += "    %d [label=\"%s\"];\n" % (i, node)
             mapping[node] = i
 
         for edge in edges:
