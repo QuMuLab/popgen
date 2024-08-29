@@ -2,8 +2,8 @@ from krrt.utils import get_opts, write_file, load_CSV, get_lines
 from krrt.stats.plots import plot_loglog, plot, create_time_profile
 from numpy import std, mean, median, product, roots
 
-from linearizer import count_linearizations
-from pop import POP
+from popgen.linearizer import count_linearizations
+from popgen.pop import POP
 from domains import GOOD_DOMAINS
 
 import networkx as nx

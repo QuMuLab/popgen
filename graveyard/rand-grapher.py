@@ -7,8 +7,8 @@ getcontext().prec = 30
 from krrt.utils import write_file, append_file
 from krrt.planning.strips.representation import Action
 
-from pop import POP
-from linearizer import compute_linflex
+from popgen.pop import POP
+from popgen.linearizer import compute_linflex
 
 def doit(nActs, nFlex, nTrials):
 
