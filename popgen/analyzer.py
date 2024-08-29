@@ -41,7 +41,7 @@ def extract_pop(mapping, output):
 
     for v in [x for x in values if '-' not in x]:
         if 'in plan' in mapping[v]:
-            act = mapping[v].split(' in plan')[0][1:-1]
+            act = mapping[v].split(' in plan')[0]
             actions.add(act)
         elif ' -> ' in mapping[v]:
             parts = mapping[v].split(' -> ')
@@ -59,9 +59,9 @@ def extract_pop(mapping, output):
         pop.add_action(a)
 
     for (u,v) in orderings:
-        pop.link_actions(u,v,'')
+        pop.link_actions(u,'',v)
 
-    for (a1, a2, p) in supports:
+    for (a1, p, a2) in supports:
         pop.link_actions(a1,p,a2)
 
     #for a1 in actions:

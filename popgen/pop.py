@@ -45,7 +45,7 @@ class POP(object):
         if str(a) == 'goal':
             self.goal = a
 
-    def link_actions(self, a1, a2, reason):
+    def link_actions(self, a1, reason, a2):
 
         if '' == reason:
             self.ordering_edges.add((a1,a2))
@@ -59,7 +59,7 @@ class POP(object):
             self.link_reasons[(a1,a2)] = set([reason])
         self.num_links += 1
 
-    def unlink_actions(self, a1, a2, reason):
+    def unlink_actions(self, a1, reason, a2):
         self.link_reasons[(a1, a2)].remove(reason)
 
         if 0 == len(self.link_reasons[(a1,a2)]):
