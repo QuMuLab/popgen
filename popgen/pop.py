@@ -40,9 +40,9 @@ class POP(object):
     def add_action(self, a):
         self.network.add_node(a)
 
-        if a.name == 'init':
+        if str(a) == 'init':
             self.init = a
-        if a.name == 'goal':
+        if str(a) == 'goal':
             self.goal = a
 
     def link_actions(self, a1, a2, reason):

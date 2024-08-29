@@ -52,7 +52,7 @@ def encode_POP(pop, cmdargs):
             return f"Action({self.name})"
 
         def __str__(self):
-            return str(self.name)
+            return f"{self.name} in plan"
 
         def __hash__(self) -> int:
             return hash(self.name)

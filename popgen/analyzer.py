@@ -32,50 +32,37 @@ def do_popstats(mapping, output, show_linears = False):
     varline = [x for x in output if x.startswith('v ')][0]
     solline = [x for x in output if x.startswith('s ')][0]
 
-    optiml = ('OPTIMUM FOUND' in solline)
+    optimal = ('OPTIMUM FOUND' in solline)
     values = varline.strip().split(' ')[1:]
 
-
-
-
-    # TODO: Continue from here...
-
-
-
-
     actions = set()
-    act_mapping = {}
     orderings = []
     supports = []
 
     for v in [x for x in values if '-' not in x]:
         if 'in plan' in mapping[v]:
-            act = Action(None, None, None, mapping[v].split(' in plan')[0][1:-1])
-            act_mapping[mapping[v].split(' in plan')[0]] = act
+            act = mapping[v].split(' in plan')[0][1:-1]
             actions.add(act)
-        elif 'is ordered before' in mapping[v]:
-            orderings.append((act_mapping[mapping[v].split(' is ordered before ')[0]], act_mapping[mapping[v].split(' is ordered before ')[1]]))
+        elif ' -> ' in mapping[v]:
+            parts = mapping[v].split(' -> ')
+            orderings.append((parts[0], parts[1]))
         elif 'supports' in mapping[v]:
-            supports.append((act_mapping[mapping[v].split(' supports ')[0]],
-                             act_mapping[mapping[v].split(' supports ')[1].split(' with ')[0]],
-                             mapping[v].split(' supports ')[1].split(' with ')[1]))
+            parts = mapping[v].split(' supports ')
+            supports.append((parts[0], parts[1].split(' for ')[0], parts[1].split(' for ')[1]))
         else:
-            print("Error: Unrecognized mapping line: %s" % mapping[v])
+            pass # These are auxiliary variables
+            # print("Error: Unrecognized mapping line: %s" % mapping[v])
 
     pop = POP()
 
     for a in actions:
         pop.add_action(a)
-        if a.operator == 'init':
-            pop.init = a
-        if a.operator == 'goal':
-            pop.goal = a
 
     for (u,v) in orderings:
         pop.link_actions(u,v,'')
 
     for (a1, a2, p) in supports:
-        pop.link_actions(a1,a2,p)
+        pop.link_actions(a1,p,a2)
 
     #for a1 in actions:
     #    for a2 in actions:
@@ -87,7 +74,7 @@ def do_popstats(mapping, output, show_linears = False):
         print("\nLinearizations: %d\n" % count_linearizations(pop))
 
     print("\n%s\n" % str(pop))
-    print("Optimal: %s" % str(optimal))
+    print("Optimal: %s\n" % str(optimal))
 
 
 if __name__ == '__main__':
